@@ -78,6 +78,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="350" />
+                <ColumnDefinition Width="350" />
             </Grid.ColumnDefinitions>
 
             <!-- DataGrid -->
@@ -168,6 +169,50 @@
 
                         <Button Command="{Binding UpdateUnitCommand}" Padding="10,5" Margin="0,0,0,10">
                             Apply Changes
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Issues panel -->
+            <Border Grid.Column="2" BorderBrush="LightGray" BorderThickness="1,1,0,0" Background="#FFF8F0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="15" Width="320" Orientation="Vertical">
+                        <TextBlock Text="Validation Issues" FontSize="14" FontWeight="Bold" Margin="0,0,0,15" />
+
+                        <TextBlock Text="{Binding IssuesPanel.DisplayedIssues.Count, StringFormat='Total: {0}'}" Margin="0,0,0,10" FontWeight="Bold" />
+
+                        <!-- Issues list -->
+                        <ItemsControl ItemsSource="{Binding IssuesPanel.DisplayedIssues}" MaxHeight="400" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Command="{Binding DataContext.SelectIssueCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                            CommandParameter="{Binding .}"
+                                            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                            HorizontalAlignment="Stretch"
+                                            Margin="0,0,0,5"
+                                            Padding="5">
+                                        <StackPanel Orientation="Vertical" HorizontalAlignment="Left">
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                                <TextBlock Text="{Binding Severity}" FontWeight="Bold" Margin="0,0,10,0">
+                                                    <TextBlock.Foreground>
+                                                        <MultiBinding Converter="{StaticResource SeverityToColorConverter}">
+                                                            <Binding Path="Severity" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Foreground>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding UnitId}" Foreground="Gray" FontSize="11" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,3" />
+                                            <TextBlock Text="{Binding SuggestedAction}" TextWrapping="Wrap" FontSize="10" Foreground="DarkGreen" FontStyle="Italic" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Button Command="{Binding IssuesPanel.ClearFiltersCommand}" Padding="10,5" Margin="0,15,0,0">
+                            Clear Filters
                         </Button>
                     </StackPanel>
                 </ScrollViewer>

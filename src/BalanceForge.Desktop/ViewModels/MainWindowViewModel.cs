@@ -59,6 +59,9 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool isDirty;
 
+    [ObservableProperty]
+    private IssuesPanelViewModel issuesPanel = new();
+
     public IReadOnlyList<UnitRole> AvailableRoles => Enum.GetValues<UnitRole>().ToList();
 
     public IReadOnlyList<int> AvailableTiers => Enumerable.Range(1, 10).ToList();
@@ -127,6 +130,7 @@ public partial class MainWindowViewModel : ObservableObject
             Units = new ObservableCollection<UnitDefinition>(result.Units);
             LoadedUnitCount = result.Units.Count;
             ValidationIssueCount = result.ValidationIssues.Count;
+            IssuesPanel.UpdateIssues(result.ValidationIssues);
 
             // Initialize tiers from loaded units
             var loadedTiers = Units.Select(u => u.Tier).Distinct().ToHashSet();
@@ -212,10 +216,26 @@ public partial class MainWindowViewModel : ObservableObject
 
         ValidationIssueCount = allIssues.Count;
         ErrorMessage = string.Empty;
+        IssuesPanel.UpdateIssues(allIssues);
 
         // Update roster with the edited unit
         ApplyFilters();
         Inspector.ClearUnsavedChanges();
         IsDirty = false;
+    }
+
+    [RelayCommand]
+    public void SelectIssue(ValidationIssue? issue)
+    {
+        if (issue == null)
+            return;
+
+        // Find and select the unit affected by this issue
+        var affectedUnit = DisplayedUnits.FirstOrDefault(u => u.Id == issue.UnitId);
+        if (affectedUnit != null)
+        {
+            SelectedUnit = affectedUnit;
+            Inspector.LoadFromUnit(affectedUnit.UnitDefinition);
+        }
     }
 }

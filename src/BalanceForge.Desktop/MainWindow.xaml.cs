@@ -9,6 +9,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using BalanceForge.Desktop.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BalanceForge.Desktop;
 
@@ -20,6 +21,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        DataContext = new MainWindowViewModel();
+        var app = (App)System.Windows.Application.Current;
+        var viewModel = app.ServiceProvider.GetRequiredService<MainWindowViewModel>();
+        DataContext = viewModel;
     }
 }

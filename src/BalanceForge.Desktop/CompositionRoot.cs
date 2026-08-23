@@ -3,6 +3,8 @@ namespace BalanceForge.Desktop;
 using BalanceForge.Application;
 using BalanceForge.Application.Services;
 using BalanceForge.Application.UseCases;
+using BalanceForge.Desktop.Services;
+using BalanceForge.Desktop.ViewModels;
 using BalanceForge.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,13 +28,16 @@ public static class CompositionRoot
         // Application services
         services.AddSingleton<UnitValidationService>();
 
+        // Desktop services
+        services.AddSingleton<IFileDialogService, FileDialogService>();
+
         // Use cases
         services.AddSingleton<IValidateRosterUseCase, ValidateRosterUseCase>();
         services.AddSingleton<ILoadRosterUseCase, LoadRosterUseCase>();
         services.AddSingleton<ISaveRosterUseCase, SaveRosterUseCase>();
 
-        // ViewModels (can be scoped or singleton depending on needs)
-        // To be added as features are implemented
+        // ViewModels
+        services.AddSingleton<MainWindowViewModel>();
 
         return services.BuildServiceProvider();
     }

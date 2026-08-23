@@ -21,8 +21,9 @@ public class MainWindowViewModelTests
 
         var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
         var calculator = new BalanceMetricsCalculator();
+        var validator = new UnitValidationService();
 
-        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator);
+        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator, validator);
 
         // Act
         await viewModel.SelectFileCommand.ExecuteAsync(null);
@@ -43,8 +44,9 @@ public class MainWindowViewModelTests
 
         var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
         var calculator = new BalanceMetricsCalculator();
+        var validator = new UnitValidationService();
 
-        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator);
+        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator, validator);
 
         // Act
         await viewModel.SelectFileCommand.ExecuteAsync(null);
@@ -60,8 +62,9 @@ public class MainWindowViewModelTests
         var mockFileDialog = new Mock<IFileDialogService>();
         var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
         var calculator = new BalanceMetricsCalculator();
+        var validator = new UnitValidationService();
 
-        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator);
+        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator, validator);
         viewModel.SelectedFilePath = string.Empty;
 
         // Act
@@ -107,7 +110,8 @@ public class MainWindowViewModelTests
             .ReturnsAsync(result);
 
         var calculator = new BalanceMetricsCalculator();
-        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator);
+        var validator = new UnitValidationService();
+        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator, validator);
         viewModel.SelectedFilePath = "/path/to/units.json";
 
         // Act
@@ -128,12 +132,13 @@ public class MainWindowViewModelTests
         var mockFileDialog = new Mock<IFileDialogService>();
         var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
         var calculator = new BalanceMetricsCalculator();
+        var validator = new UnitValidationService();
 
         mockLoadUseCase
             .Setup(x => x.ExecuteAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("File not found"));
 
-        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator);
+        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator, validator);
         viewModel.SelectedFilePath = "/nonexistent/path.json";
 
         // Act
@@ -153,13 +158,14 @@ public class MainWindowViewModelTests
         var mockFileDialog = new Mock<IFileDialogService>();
         var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
         var calculator = new BalanceMetricsCalculator();
+        var validator = new UnitValidationService();
 
         var tcs = new TaskCompletionSource<RosterLoadResult>();
         mockLoadUseCase
             .Setup(x => x.ExecuteAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .Returns(tcs.Task);
 
-        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator);
+        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator, validator);
         viewModel.SelectedFilePath = "/path/to/units.json";
 
         // Act - start load
@@ -189,6 +195,7 @@ public class MainWindowViewModelTests
         var mockFileDialog = new Mock<IFileDialogService>();
         var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
         var calculator = new BalanceMetricsCalculator();
+        var validator = new UnitValidationService();
 
         var unit1 = new UnitDefinition
         {
@@ -224,7 +231,7 @@ public class MainWindowViewModelTests
             ProductionTimeSeconds = 8
         };
 
-        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator);
+        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator, validator);
         viewModel.Units = new System.Collections.ObjectModel.ObservableCollection<UnitDefinition>(new[] { unit1, unit2 });
 
         // Filter to only Infantry
@@ -246,6 +253,7 @@ public class MainWindowViewModelTests
         var mockFileDialog = new Mock<IFileDialogService>();
         var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
         var calculator = new BalanceMetricsCalculator();
+        var validator = new UnitValidationService();
 
         var unit1 = new UnitDefinition
         {
@@ -281,7 +289,7 @@ public class MainWindowViewModelTests
             ProductionTimeSeconds = 20
         };
 
-        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator);
+        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator, validator);
         viewModel.Units = new System.Collections.ObjectModel.ObservableCollection<UnitDefinition>(new[] { unit1, unit2 });
 
         // Filter to only Tier 2
@@ -303,6 +311,7 @@ public class MainWindowViewModelTests
         var mockFileDialog = new Mock<IFileDialogService>();
         var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
         var calculator = new BalanceMetricsCalculator();
+        var validator = new UnitValidationService();
 
         var unit = new UnitDefinition
         {
@@ -321,7 +330,7 @@ public class MainWindowViewModelTests
             ProductionTimeSeconds = 10
         };
 
-        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator);
+        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator, validator);
         viewModel.Units = new System.Collections.ObjectModel.ObservableCollection<UnitDefinition>(new[] { unit });
         viewModel.SelectedRoles = new HashSet<UnitRole> { UnitRole.Infantry };
         viewModel.SelectedTiers = new HashSet<int> { 1 };

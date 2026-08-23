@@ -2,13 +2,15 @@ namespace BalanceForge.Application;
 
 using BalanceForge.Domain;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
-/// Pure validation service that checks a single UnitDefinition against basic rules.
+/// Pure validation service that checks units against both single-unit and cross-unit rules.
 /// Returns all issues found; does not stop at the first issue.
 /// </summary>
 public class UnitValidationService
 {
+    private readonly BalanceMetricsCalculator _metricsCalculator = new();
     /// <summary>
     /// Validate a single unit and return all issues found.
     /// </summary>
@@ -102,6 +104,55 @@ public class UnitValidationService
                 Message: $"Unit '{unit.DisplayName}' has tier {unit.Tier}. Tier must be between 1 and 4.",
                 SuggestedAction: "Set tier to a value between 1 and 4."
             ));
+        }
+
+        return issues;
+    }
+
+    /// <summary>
+    /// Validate a roster of units against cross-unit rules.
+    /// </summary>
+    /// <param name="units">The units to validate together (not mutated).</param>
+    /// <returns>A collection of all cross-unit validation issues found.</returns>
+    public IEnumerable<ValidationIssue> ValidateRoster(IEnumerable<UnitDefinition> units)
+    {
+        ArgumentNullException.ThrowIfNull(units);
+
+        var unitList = units.ToList();
+        var issues = new List<ValidationIssue>();
+
+        // Rule: Tier 2+ units cannot have lower total cost than Tier 1 units of the same role,
+        // unless explicitly allowed via AllowCostTierInversion.
+        var tier1ByRole = unitList
+            .Where(u => u.Tier == 1)
+            .GroupBy(u => u.Role)
+            .ToDictionary(g => g.Key, g => g.Min(u => _metricsCalculator.Calculate(u).TotalCost));
+
+        var tier2PlusUnits = unitList.Where(u => u.Tier >= 2);
+        var processedHigherTierUnits = new HashSet<string>();
+
+        foreach (var unit in tier2PlusUnits)
+        {
+            if (processedHigherTierUnits.Contains(unit.Id))
+                continue;
+
+            if (!tier1ByRole.TryGetValue(unit.Role, out var tier1MinCost))
+                continue;
+
+            var unitTotalCost = _metricsCalculator.Calculate(unit).TotalCost;
+
+            if (unitTotalCost < tier1MinCost && !unit.AllowCostTierInversion)
+            {
+                issues.Add(new ValidationIssue(
+                    RuleId: "TIER_COST_INVERSION",
+                    Severity: ValidationSeverity.Warning,
+                    UnitId: unit.Id,
+                    Message: $"Unit '{unit.DisplayName}' (Tier {unit.Tier}, role: {unit.Role}) has total cost {unitTotalCost}, which is lower than the minimum Tier 1 {unit.Role} cost ({tier1MinCost}). Higher-tier units should generally cost more.",
+                    SuggestedAction: "Increase cost or set AllowCostTierInversion to true if this inversion is intentional."
+                ));
+
+                processedHigherTierUnits.Add(unit.Id);
+            }
         }
 
         return issues;

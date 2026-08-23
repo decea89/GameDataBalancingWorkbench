@@ -72,4 +72,11 @@ public class UnitDefinition
     /// Production time in seconds. May be fractional.
     /// </summary>
     public required double ProductionTimeSeconds { get; set; }
+
+    /// <summary>
+    /// If true, this Tier 2+ unit is explicitly allowed to have lower cost than Tier 1 units
+    /// of the same role, suppressing the tier cost inversion validation issue.
+    /// Default: false (inversion not allowed).
+    /// </summary>
+    public bool AllowCostTierInversion { get; set; } = false;
 }

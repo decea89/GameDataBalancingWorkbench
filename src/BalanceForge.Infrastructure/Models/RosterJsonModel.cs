@@ -9,5 +9,5 @@ using System.Text.Json.Serialization;
 public class RosterJsonModel
 {
     [JsonPropertyName("units")]
-    public required List<UnitJsonModel> Units { get; set; }
+    public List<UnitJsonModel> Units { get; set; } = new();
 }

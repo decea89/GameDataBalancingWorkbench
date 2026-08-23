@@ -9,43 +9,43 @@ using System.Text.Json.Serialization;
 public class UnitJsonModel
 {
     [JsonPropertyName("id")]
-    public required string Id { get; set; }
+    public string Id { get; set; } = string.Empty;
 
     [JsonPropertyName("displayName")]
-    public required string DisplayName { get; set; }
+    public string DisplayName { get; set; } = string.Empty;
 
     [JsonPropertyName("role")]
-    public required string Role { get; set; }
+    public string Role { get; set; } = string.Empty;
 
     [JsonPropertyName("tier")]
-    public required int Tier { get; set; }
+    public int Tier { get; set; }
 
     [JsonPropertyName("health")]
-    public required double Health { get; set; }
+    public double Health { get; set; }
 
     [JsonPropertyName("damage")]
-    public required double Damage { get; set; }
+    public double Damage { get; set; }
 
     [JsonPropertyName("attacksPerSecond")]
-    public required double AttacksPerSecond { get; set; }
+    public double AttacksPerSecond { get; set; }
 
     [JsonPropertyName("armor")]
-    public required double Armor { get; set; }
+    public double Armor { get; set; }
 
     [JsonPropertyName("range")]
-    public required double Range { get; set; }
+    public double Range { get; set; }
 
     [JsonPropertyName("woodCost")]
-    public required int WoodCost { get; set; }
+    public int WoodCost { get; set; }
 
     [JsonPropertyName("goldCost")]
-    public required int GoldCost { get; set; }
+    public int GoldCost { get; set; }
 
     [JsonPropertyName("populationCost")]
-    public required int PopulationCost { get; set; }
+    public int PopulationCost { get; set; }
 
     [JsonPropertyName("productionTimeSeconds")]
-    public required double ProductionTimeSeconds { get; set; }
+    public double ProductionTimeSeconds { get; set; }
 
     [JsonPropertyName("allowCostTierInversion")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]

@@ -1,6 +1,7 @@
 namespace BalanceForge.Desktop.ViewModels;
 
 using System.Collections.ObjectModel;
+using BalanceForge.Application;
 using BalanceForge.Application.UseCases;
 using BalanceForge.Desktop.Services;
 using BalanceForge.Domain;
@@ -15,6 +16,7 @@ public partial class MainWindowViewModel : ObservableObject
 {
     private readonly IFileDialogService _fileDialogService;
     private readonly ILoadRosterUseCase _loadRosterUseCase;
+    private readonly BalanceMetricsCalculator _metricsCalculator;
 
     [ObservableProperty]
     private string title = "BalanceForge - Unit Balance Editor";
@@ -37,19 +39,35 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<UnitDefinition> units = new();
 
+    [ObservableProperty]
+    private ObservableCollection<RosterUnitViewModel> displayedUnits = new();
+
+    [ObservableProperty]
+    private HashSet<UnitRole> selectedRoles = new(Enum.GetValues<UnitRole>());
+
+    [ObservableProperty]
+    private HashSet<int> selectedTiers = new();
+
+    public IReadOnlyList<UnitRole> AvailableRoles => Enum.GetValues<UnitRole>().ToList();
+
+    public IReadOnlyList<int> AvailableTiers => Enumerable.Range(1, 10).ToList();
+
     public MainWindowViewModel()
     {
         // For XAML designer support
         _fileDialogService = null!;
         _loadRosterUseCase = null!;
+        _metricsCalculator = null!;
     }
 
     public MainWindowViewModel(
         IFileDialogService fileDialogService,
-        ILoadRosterUseCase loadRosterUseCase)
+        ILoadRosterUseCase loadRosterUseCase,
+        BalanceMetricsCalculator metricsCalculator)
     {
         _fileDialogService = fileDialogService ?? throw new ArgumentNullException(nameof(fileDialogService));
         _loadRosterUseCase = loadRosterUseCase ?? throw new ArgumentNullException(nameof(loadRosterUseCase));
+        _metricsCalculator = metricsCalculator ?? throw new ArgumentNullException(nameof(metricsCalculator));
     }
 
     [RelayCommand]
@@ -94,11 +112,19 @@ public partial class MainWindowViewModel : ObservableObject
             Units = new ObservableCollection<UnitDefinition>(result.Units);
             LoadedUnitCount = result.Units.Count;
             ValidationIssueCount = result.ValidationIssues.Count;
+
+            // Initialize tiers from loaded units
+            var loadedTiers = Units.Select(u => u.Tier).Distinct().ToHashSet();
+            SelectedTiers = new HashSet<int>(loadedTiers);
+
+            // Apply filters and populate DisplayedUnits
+            ApplyFilters();
         }
         catch (Exception ex)
         {
             ErrorMessage = $"Failed to load roster: {ex.Message}";
             Units.Clear();
+            DisplayedUnits.Clear();
             LoadedUnitCount = 0;
             ValidationIssueCount = 0;
         }
@@ -106,6 +132,17 @@ public partial class MainWindowViewModel : ObservableObject
         {
             IsLoading = false;
         }
+    }
+
+    [RelayCommand]
+    public void ApplyFilters()
+    {
+        var filtered = Units
+            .Where(u => SelectedRoles.Contains(u.Role) && SelectedTiers.Contains(u.Tier))
+            .Select(u => new RosterUnitViewModel(u, _metricsCalculator))
+            .ToList();
+
+        DisplayedUnits = new ObservableCollection<RosterUnitViewModel>(filtered);
     }
 }
 

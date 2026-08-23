@@ -27,6 +27,7 @@ public static class CompositionRoot
 
         // Application services
         services.AddSingleton<UnitValidationService>();
+        services.AddSingleton<BalanceMetricsCalculator>();
 
         // Desktop services
         services.AddSingleton<IFileDialogService, FileDialogService>();

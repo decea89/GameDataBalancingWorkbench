@@ -5,55 +5,95 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BalanceForge.Desktop"
         mc:Ignorable="d"
-        Title="{Binding Title}" Height="600" Width="900">
-    <Grid>
-        <DockPanel>
-            <!-- Top toolbar -->
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="10" Height="Auto">
-                <Button Command="{Binding SelectFileCommand}" Padding="10,5" Margin="0,0,10,0">
-                    Select File
+        Title="{Binding Title}" Height="700" Width="1200">
+    <DockPanel>
+        <!-- Top toolbar -->
+        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="10" Height="Auto">
+            <Button Command="{Binding SelectFileCommand}" Padding="10,5" Margin="0,0,10,0">
+                Select File
+            </Button>
+            <Button Command="{Binding LoadCommand}" Padding="10,5" Margin="0,0,10,0">
+                Load
+            </Button>
+            <TextBlock Text="{Binding SelectedFilePath}" Margin="10,0" VerticalAlignment="Center" Foreground="Gray" FontSize="11" Width="300" TextTrimming="CharacterEllipsis"/>
+        </StackPanel>
+
+        <!-- Filter toolbar -->
+        <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="0,1,0,0" Margin="10,0">
+            <StackPanel Orientation="Horizontal" Margin="0,10">
+                <TextBlock Text="Filter by Role:" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="Bold"/>
+                <ItemsControl ItemsSource="{Binding AvailableRoles}" Margin="0,0,20,0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding}" Margin="5,0" VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="Filter by Tier:" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="Bold"/>
+                <ItemsControl ItemsSource="{Binding AvailableTiers}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding}" Margin="5,0" VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Button Command="{Binding ApplyFiltersCommand}" Padding="10,5" Margin="20,0,0,0">
+                    Apply Filters
                 </Button>
-                <Button Command="{Binding LoadCommand}" Padding="10,5">
-                    Load
-                </Button>
-                <TextBlock Text="{Binding SelectedFilePath}" Margin="10,0" VerticalAlignment="Center" Foreground="Gray" FontSize="11"/>
             </StackPanel>
+        </Border>
 
-            <!-- Main content area -->
-            <Grid DockPanel.Dock="Top">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+        <!-- Status area -->
+        <StackPanel DockPanel.Dock="Top" Margin="10" Orientation="Horizontal">
+            <TextBlock>
+                <Run Text="Units loaded: " Foreground="Black" />
+                <Run Text="{Binding LoadedUnitCount}" Foreground="Green" FontWeight="Bold" />
+                <Run Text=" | Displayed: " Foreground="Black" />
+                <Run Text="{Binding DisplayedUnits.Count}" Foreground="Blue" FontWeight="Bold" />
+                <Run Text=" | Issues: " Foreground="Black" />
+                <Run Text="{Binding ValidationIssueCount}" Foreground="Orange" FontWeight="Bold" />
+            </TextBlock>
+        </StackPanel>
 
-                <!-- Status/Error area -->
-                <StackPanel Grid.Row="0" Grid.Column="0" Margin="10" VerticalAlignment="Top">
-                    <TextBlock>
-                        <Run Text="Units loaded: " Foreground="Black" />
-                        <Run Text="{Binding LoadedUnitCount}" Foreground="Green" FontWeight="Bold" />
-                    </TextBlock>
-                    <TextBlock Margin="0,5,0,0">
-                        <Run Text="Validation issues: " Foreground="Black" />
-                        <Run Text="{Binding ValidationIssueCount}" Foreground="Orange" FontWeight="Bold" />
-                    </TextBlock>
-                </StackPanel>
+        <!-- Error message -->
+        <TextBlock DockPanel.Dock="Top" Margin="10,0,10,10" Foreground="Red" TextWrapping="Wrap">
+            <Run Text="{Binding ErrorMessage}" />
+        </TextBlock>
 
-                <!-- Error message -->
-                <TextBlock Grid.Row="1" Grid.Column="0" Margin="10" Foreground="Red" TextWrapping="Wrap">
-                    <Run Text="Error: " FontWeight="Bold" />
-                    <Run Text="{Binding ErrorMessage}" />
-                </TextBlock>
-            </Grid>
+        <!-- Main DataGrid -->
+        <Border DockPanel.Dock="Bottom" BorderBrush="LightGray" BorderThickness="0,1,0,0">
+            <DataGrid ItemsSource="{Binding DisplayedUnits}" IsReadOnly="True" AutoGenerateColumns="False" ColumnHeaderHeight="30">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Display Name" Binding="{Binding DisplayName}" Width="120"/>
+                    <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="100"/>
+                    <DataGridTextColumn Header="Tier" Binding="{Binding Tier}" Width="60"/>
+                    <DataGridTextColumn Header="Health" Binding="{Binding Health, StringFormat=F0}" Width="80"/>
+                    <DataGridTextColumn Header="Damage" Binding="{Binding Damage, StringFormat=F2}" Width="80"/>
+                    <DataGridTextColumn Header="Atk/Sec" Binding="{Binding AttacksPerSecond, StringFormat=F2}" Width="80"/>
+                    <DataGridTextColumn Header="Total Cost" Binding="{Binding TotalCost, StringFormat=F0}" Width="100"/>
+                    <DataGridTextColumn Header="DPS" Binding="{Binding DPS, StringFormat=F2}" Width="80"/>
+                    <DataGridTextColumn Header="DPS/Cost" Binding="{Binding DPSPerCost, StringFormat=F4}" Width="100"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
 
-            <!-- Status bar -->
-            <StatusBar DockPanel.Dock="Bottom">
-                <StatusBarItem>
-                    <TextBlock Text="{Binding IsLoading, StringFormat='Loading: {0}'}" />
-                </StatusBarItem>
-            </StatusBar>
-        </DockPanel>
-    </Grid>
+        <!-- Status bar -->
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock Text="{Binding IsLoading, StringFormat='Loading: {0}'}" />
+            </StatusBarItem>
+        </StatusBar>
+    </DockPanel>
 </Window>

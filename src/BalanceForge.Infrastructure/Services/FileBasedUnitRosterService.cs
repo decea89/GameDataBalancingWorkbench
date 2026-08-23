@@ -1,6 +1,7 @@
 namespace BalanceForge.Infrastructure.Services;
 
 using System.Text.Json;
+using BalanceForge.Application.Services;
 using BalanceForge.Domain;
 using BalanceForge.Infrastructure.Mapping;
 using BalanceForge.Infrastructure.Models;

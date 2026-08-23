@@ -1,4 +1,4 @@
-namespace BalanceForge.Infrastructure.Services;
+namespace BalanceForge.Application.Services;
 
 using BalanceForge.Domain;
 

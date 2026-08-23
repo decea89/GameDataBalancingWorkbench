@@ -1,6 +1,7 @@
 namespace BalanceForge.Infrastructure.Tests;
 
 using System.Text.Json;
+using BalanceForge.Application.Services;
 using BalanceForge.Domain;
 using BalanceForge.Infrastructure.Services;
 using Xunit;

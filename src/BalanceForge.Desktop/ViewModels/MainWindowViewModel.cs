@@ -22,12 +22,18 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly BalanceMetricsCalculator _metricsCalculator;
     private readonly UnitValidationService _validationService;
     private readonly UndoRedoStack _undoRedoStack = new();
+    private RosterUnitViewModel? _comparisonUnitForCtrlClick;
 
     [ObservableProperty]
     private string title = "BalanceForge - Unit Balance Editor";
 
     [ObservableProperty]
     private string selectedFilePath = string.Empty;
+
+    partial void OnSelectedFilePathChanged(string value)
+    {
+        SaveCommand.NotifyCanExecuteChanged();
+    }
 
     [ObservableProperty]
     private int loadedUnitCount = 0;
@@ -56,14 +62,40 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private RosterUnitViewModel? selectedUnit;
 
+    partial void OnSelectedUnitChanged(RosterUnitViewModel? value)
+    {
+        // Sync comparison when selected unit changes
+        if (Comparison != null && _comparisonUnitForCtrlClick != null)
+        {
+            Comparison.SetComparison(value, _comparisonUnitForCtrlClick);
+        }
+    }
+
     [ObservableProperty]
     private UnitInspectorViewModel inspector = new();
 
     [ObservableProperty]
     private bool isDirty;
 
+    partial void OnIsDirtyChanged(bool value)
+    {
+        SaveCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnDisplayedUnitsChanged(ObservableCollection<RosterUnitViewModel> value)
+    {
+        // Update chart when displayed units change (due to filters or load)
+        BalanceChart?.UpdateChartData(value);
+    }
+
     [ObservableProperty]
     private IssuesPanelViewModel issuesPanel = new();
+
+    [ObservableProperty]
+    private BalanceChartViewModel? balanceChart;
+
+    [ObservableProperty]
+    private ComparisonViewModel? comparison;
 
     [ObservableProperty]
     private string statusMessage = string.Empty;
@@ -86,6 +118,8 @@ public partial class MainWindowViewModel : ObservableObject
         _saveRosterUseCase = null!;
         _metricsCalculator = null!;
         _validationService = null!;
+        BalanceChart = null!;
+        Comparison = null!;
     }
 
     public MainWindowViewModel(
@@ -100,6 +134,8 @@ public partial class MainWindowViewModel : ObservableObject
         _saveRosterUseCase = saveRosterUseCase ?? throw new ArgumentNullException(nameof(saveRosterUseCase));
         _metricsCalculator = metricsCalculator ?? throw new ArgumentNullException(nameof(metricsCalculator));
         _validationService = validationService ?? throw new ArgumentNullException(nameof(validationService));
+        BalanceChart = new BalanceChartViewModel(_metricsCalculator);
+        Comparison = new ComparisonViewModel(_metricsCalculator, _validationService);
         Inspector.PropertyChanged += (s, e) => IsDirty = Inspector.HasUnsavedChanges;
         _undoRedoStack.StackChanged += (s, e) =>
         {
@@ -158,6 +194,13 @@ public partial class MainWindowViewModel : ObservableObject
 
             // Apply filters and populate DisplayedUnits
             ApplyFilters();
+
+            // Reset dirty state and undo/redo after successful load
+            IsDirty = false;
+            _undoRedoStack.Clear();
+            CanUndo = false;
+            CanRedo = false;
+            Inspector.ClearUnsavedChanges();
         }
         catch (Exception ex)
         {
@@ -268,6 +311,32 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public void SelectUnitForComparison(RosterUnitViewModel? unit)
+    {
+        if (unit == null)
+        {
+            // Clear comparison
+            Comparison?.SetComparison(null, null);
+            return;
+        }
+
+        // If this is the same as the last comparison unit, toggle it off
+        if (_comparisonUnitForCtrlClick?.Id == unit.Id)
+        {
+            _comparisonUnitForCtrlClick = null;
+            Comparison?.SetComparison(null, null);
+            return;
+        }
+
+        // Otherwise, set or replace the comparison unit
+        var previousUnit = _comparisonUnitForCtrlClick;
+        _comparisonUnitForCtrlClick = unit;
+
+        // Comparison pairs: selected unit vs stored unit
+        Comparison?.SetComparison(SelectedUnit, unit);
+    }
+
+    [RelayCommand]
     public void UpdateUnit()
     {
         if (SelectedUnit?.UnitDefinition == null)
@@ -315,6 +384,9 @@ public partial class MainWindowViewModel : ObservableObject
         ValidationIssueCount = allIssues.Count;
         ErrorMessage = string.Empty;
         IssuesPanel.UpdateIssues(allIssues);
+
+        // Refresh comparison if active
+        Comparison?.RefreshComparison();
     }
 
     [RelayCommand]
@@ -332,7 +404,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecutePropertyName = nameof(CanExecuteSave))]
     public async Task Save()
     {
         if (string.IsNullOrEmpty(SelectedFilePath) || !System.IO.File.Exists(SelectedFilePath))
@@ -343,6 +415,8 @@ public partial class MainWindowViewModel : ObservableObject
 
         await SaveToFile(SelectedFilePath);
     }
+
+    private bool CanExecuteSave() => IsDirty && !string.IsNullOrEmpty(SelectedFilePath);
 
     [RelayCommand]
     public async Task SaveAs()
@@ -367,19 +441,19 @@ public partial class MainWindowViewModel : ObservableObject
             // Success
             IsDirty = false;
             Inspector.ClearUnsavedChanges();
-            StatusMessage = $"Saved successfully to {System.IO.Path.GetFileName(filePath)}";
+            StatusMessage = $"✓ Saved to {System.IO.Path.GetFileName(filePath)}";
             ErrorMessage = string.Empty;
         }
         catch (InvalidOperationException ex)
         {
             // Validation errors; units remain in-memory
-            ErrorMessage = $"Cannot save: {ex.Message}";
+            ErrorMessage = $"Cannot save due to validation errors: {ex.Message}";
             StatusMessage = string.Empty;
         }
         catch (Exception ex)
         {
             // Other errors; units remain in-memory
-            ErrorMessage = $"Save failed: {ex.Message}";
+            ErrorMessage = $"Save failed: Unable to write file. Please check the file path and permissions.";
             StatusMessage = string.Empty;
         }
     }

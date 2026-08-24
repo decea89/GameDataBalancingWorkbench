@@ -469,4 +469,100 @@ public class MainWindowViewModelTests
         Assert.Contains("Cannot save", viewModel.ErrorMessage);
         Assert.Single(viewModel.Units);
     }
+
+    [Fact]
+    public void SaveCommand_WhenNotDirty_CannotExecute()
+    {
+        // Arrange
+        var mockFileDialog = new Mock<IFileDialogService>();
+        var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
+        var mockSaveUseCase = new Mock<ISaveRosterUseCase>();
+        var calculator = new BalanceMetricsCalculator();
+        var validator = new UnitValidationService();
+
+        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, mockSaveUseCase.Object, calculator, validator);
+        viewModel.SelectedFilePath = "/path/to/units.json";
+        viewModel.IsDirty = false;
+
+        // Act
+        var canExecute = viewModel.SaveCommand.CanExecute(null);
+
+        // Assert
+        Assert.False(canExecute);
+    }
+
+    [Fact]
+    public void SaveCommand_WhenNoFilePath_CannotExecute()
+    {
+        // Arrange
+        var mockFileDialog = new Mock<IFileDialogService>();
+        var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
+        var mockSaveUseCase = new Mock<ISaveRosterUseCase>();
+        var calculator = new BalanceMetricsCalculator();
+        var validator = new UnitValidationService();
+
+        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, mockSaveUseCase.Object, calculator, validator);
+        viewModel.SelectedFilePath = string.Empty;
+        viewModel.IsDirty = true;
+
+        // Act
+        var canExecute = viewModel.SaveCommand.CanExecute(null);
+
+        // Assert
+        Assert.False(canExecute);
+    }
+
+    [Fact]
+    public void SaveCommand_WhenDirtyAndFilePath_CanExecute()
+    {
+        // Arrange
+        var mockFileDialog = new Mock<IFileDialogService>();
+        var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
+        var mockSaveUseCase = new Mock<ISaveRosterUseCase>();
+        var calculator = new BalanceMetricsCalculator();
+        var validator = new UnitValidationService();
+
+        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, mockSaveUseCase.Object, calculator, validator);
+        viewModel.SelectedFilePath = "/path/to/units.json";
+        viewModel.IsDirty = true;
+
+        // Act
+        var canExecute = viewModel.SaveCommand.CanExecute(null);
+
+        // Assert
+        Assert.True(canExecute);
+    }
+
+    [Fact]
+    public async Task Load_WithSuccessfulLoad_ClearsDirtyAndUndoRedo()
+    {
+        // Arrange
+        var mockFileDialog = new Mock<IFileDialogService>();
+        var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
+        var mockSaveUseCase = new Mock<ISaveRosterUseCase>();
+        var calculator = new BalanceMetricsCalculator();
+        var validator = new UnitValidationService();
+
+        var unit = new UnitDefinition { Id = "warrior", DisplayName = "Warrior", Role = UnitRole.Infantry, Tier = 1, Health = 100, Damage = 10, AttacksPerSecond = 1 };
+        var result = new RosterLoadResult { Units = new[] { unit }.ToList(), ValidationIssues = new List<ValidationIssue>(), HasErrors = false };
+
+        mockLoadUseCase
+            .Setup(x => x.ExecuteAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(result);
+
+        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, mockSaveUseCase.Object, calculator, validator);
+        viewModel.SelectedFilePath = "/path/to/units.json";
+        viewModel.IsDirty = true;
+
+        // Simulate some edits in undo stack
+        viewModel.RecordUnitEdit("warrior", nameof(UnitDefinition.Health), 100, 150);
+
+        // Act
+        await viewModel.LoadCommand.ExecuteAsync(null);
+
+        // Assert
+        Assert.False(viewModel.IsDirty);
+        Assert.False(viewModel.CanUndo);
+        Assert.False(viewModel.CanRedo);
+    }
 }

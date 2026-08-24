@@ -4,8 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BalanceForge.Desktop"
+        xmlns:views="clr-namespace:BalanceForge.Desktop.Views"
         mc:Ignorable="d"
-        Title="{Binding Title}" Height="700" Width="1400">
+        Title="{Binding Title}" Height="800" Width="1400">
     <Window.InputBindings>
         <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoCommand}" />
         <KeyBinding Key="Y" Modifiers="Ctrl" Command="{Binding RedoCommand}" />
@@ -27,7 +28,7 @@
                 Redo
             </Button>
             <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0" />
-            <Button Command="{Binding SaveCommand}" Padding="10,5" Margin="0,0,10,0" IsEnabled="{Binding IsDirty}">
+            <Button Command="{Binding SaveCommand}" Padding="10,5" Margin="0,0,10,0">
                 Save
             </Button>
             <Button Command="{Binding SaveAsCommand}" Padding="10,5" Margin="0,0,10,0">
@@ -84,6 +85,9 @@
                 <Run Text=" | Issues: " Foreground="Black" />
                 <Run Text="{Binding ValidationIssueCount}" Foreground="Orange" FontWeight="Bold" />
             </TextBlock>
+            <TextBlock Margin="20,0,0,0" Foreground="#666" FontSize="10">
+                <Run Text="Tip: Select a unit, then Ctrl+click another to compare" />
+            </TextBlock>
         </StackPanel>
 
         <!-- Error and status messages -->
@@ -96,16 +100,29 @@
             </TextBlock>
         </StackPanel>
 
-        <!-- Main content area: DataGrid + Inspector -->
+        <!-- Main content area: Chart + DataGrid + Inspector -->
         <Grid DockPanel.Dock="Bottom">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="350" />
-                <ColumnDefinition Width="350" />
-            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="250" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Chart panel -->
+            <Border Grid.Row="0" BorderBrush="LightGray" BorderThickness="0,1,0,1" Background="White">
+                <views:BalanceChartView DataContext="{Binding BalanceChart}" />
+            </Border>
+
+            <!-- Data and panels -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="350" />
+                </Grid.ColumnDefinitions>
 
             <!-- DataGrid -->
-            <Border Grid.Column="0" BorderBrush="LightGray" BorderThickness="0,1,1,0">
+            <Border Grid.Row="1" Grid.Column="0" BorderBrush="LightGray" BorderThickness="0,1,1,0">
                 <DataGrid ItemsSource="{Binding DisplayedUnits}" 
                           SelectedItem="{Binding SelectedUnit}"
                           IsReadOnly="True" 
@@ -126,7 +143,7 @@
             </Border>
 
             <!-- Inspector panel -->
-            <Border Grid.Column="1" BorderBrush="LightGray" BorderThickness="1,1,0,0" Background="WhiteSmoke">
+            <Border Grid.Row="1" Grid.Column="1" BorderBrush="LightGray" BorderThickness="1,1,0,0" Background="WhiteSmoke">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="15" Width="320" Orientation="Vertical">
                         <TextBlock Text="Unit Inspector" FontSize="14" FontWeight="Bold" Margin="0,0,0,15" />
@@ -198,7 +215,7 @@
             </Border>
 
             <!-- Issues panel -->
-            <Border Grid.Column="2" BorderBrush="LightGray" BorderThickness="1,1,0,0" Background="#FFF8F0">
+            <Border Grid.Row="1" Grid.Column="2" BorderBrush="LightGray" BorderThickness="1,1,0,0" Background="#FFF8F0">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="15" Width="320" Orientation="Vertical">
                         <TextBlock Text="Validation Issues" FontSize="14" FontWeight="Bold" Margin="0,0,0,15" />
@@ -240,6 +257,12 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
+
+            <!-- Comparison panel -->
+            <Border Grid.Row="1" Grid.Column="3" BorderBrush="LightGray" BorderThickness="1,1,0,0" Background="White">
+                <views:ComparisonView DataContext="{Binding Comparison}" />
+            </Border>
+            </Grid>
         </Grid>
 
         <!-- Status bar -->

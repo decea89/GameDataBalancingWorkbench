@@ -44,9 +44,9 @@
             Margin="0,0,0,0"
             VerticalScrollBarVisibility="Auto"
             Visibility="{Binding HasComparison, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <StackPanel Margin="10" Orientation="Vertical" Spacing="12">
+            <StackPanel Margin="10" Orientation="Vertical">
                 <!-- Unit Headers -->
-                <Grid>
+                <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -62,6 +62,7 @@
                         Grid.Column="1"
                         FontSize="10"
                         Foreground="#999"
+                        Margin="8,0,8,0"
                         Text="vs" />
                     <TextBlock
                         Grid.Column="2"
@@ -72,15 +73,14 @@
                 </Grid>
 
                 <!-- Base Stats Section -->
-                <StackPanel Orientation="Vertical" Spacing="6">
+                <StackPanel Orientation="Vertical" Margin="0,0,0,12">
                     <TextBlock
                         FontSize="10"
                         FontWeight="Bold"
                         Foreground="#666"
+                        Margin="0,0,0,6"
                         Text="BASE STATS" />
-                    <ItemsControl
-                        x:Name="StatsItemsControl"
-                        ItemsSource="{Binding BaseStats}">
+                    <ItemsControl ItemsSource="{Binding BaseStats}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,3,0,3">
@@ -96,14 +96,7 @@
                                         Grid.Column="0"
                                         FontSize="10"
                                         Foreground="#333"
-                                        Text="{Binding DisplayValueA}">
-                                        <TextBlock.FontWeight>
-                                            <MultiBinding Converter="{StaticResource WinnerToBoldConverter}">
-                                                <Binding Path="Winner" />
-                                                <Binding Source="-1" />
-                                            </MultiBinding>
-                                        </TextBlock.FontWeight>
-                                    </TextBlock>
+                                        Text="{Binding DisplayValueA}" />
                                     <!-- Stat Name -->
                                     <TextBlock
                                         Grid.Column="1"
@@ -117,22 +110,13 @@
                                         FontSize="10"
                                         Foreground="#C55"
                                         Text="{Binding WinnerLabel}" />
-                                    <!-- Spacer -->
-                                    <TextBlock Grid.Column="3" />
                                     <!-- Unit B Value -->
                                     <TextBlock
                                         Grid.Column="4"
                                         FontSize="10"
                                         Foreground="#333"
                                         Text="{Binding DisplayValueB}"
-                                        TextAlignment="Right">
-                                        <TextBlock.FontWeight>
-                                            <MultiBinding Converter="{StaticResource WinnerToBoldConverter}">
-                                                <Binding Path="Winner" />
-                                                <Binding Source="1" />
-                                            </MultiBinding>
-                                        </TextBlock.FontWeight>
-                                    </TextBlock>
+                                        TextAlignment="Right" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -140,18 +124,17 @@
                 </StackPanel>
 
                 <!-- Divider -->
-                <Border BorderBrush="#DDD" BorderThickness="0,1,0,0" />
+                <Border BorderBrush="#DDD" BorderThickness="0,1,0,0" Margin="0,0,0,12" />
 
                 <!-- Metrics Section -->
-                <StackPanel Orientation="Vertical" Spacing="6">
+                <StackPanel Orientation="Vertical" Margin="0,0,0,12">
                     <TextBlock
                         FontSize="10"
                         FontWeight="Bold"
                         Foreground="#666"
+                        Margin="0,0,0,6"
                         Text="DERIVED METRICS" />
-                    <ItemsControl
-                        x:Name="MetricsItemsControl"
-                        ItemsSource="{Binding DerivedMetrics}">
+                    <ItemsControl ItemsSource="{Binding DerivedMetrics}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,3,0,3">
@@ -167,14 +150,7 @@
                                         Grid.Column="0"
                                         FontSize="10"
                                         Foreground="#333"
-                                        Text="{Binding DisplayValueA}">
-                                        <TextBlock.FontWeight>
-                                            <MultiBinding Converter="{StaticResource WinnerToBoldConverter}">
-                                                <Binding Path="Winner" />
-                                                <Binding Source="-1" />
-                                            </MultiBinding>
-                                        </TextBlock.FontWeight>
-                                    </TextBlock>
+                                        Text="{Binding DisplayValueA}" />
                                     <!-- Metric Name -->
                                     <TextBlock
                                         Grid.Column="1"
@@ -186,78 +162,33 @@
                                     <TextBlock
                                         Grid.Column="2"
                                         FontSize="10"
-                                        Foreground="#0A0"
+                                        Foreground="#C55"
                                         Text="{Binding WinnerLabel}" />
-                                    <!-- Spacer -->
-                                    <TextBlock Grid.Column="3" />
                                     <!-- Unit B Value -->
                                     <TextBlock
                                         Grid.Column="4"
                                         FontSize="10"
                                         Foreground="#333"
                                         Text="{Binding DisplayValueB}"
-                                        TextAlignment="Right">
-                                        <TextBlock.FontWeight>
-                                            <MultiBinding Converter="{StaticResource WinnerToBoldConverter}">
-                                                <Binding Path="Winner" />
-                                                <Binding Source="1" />
-                                            </MultiBinding>
-                                        </TextBlock.FontWeight>
-                                    </TextBlock>
+                                        TextAlignment="Right" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
 
-                <!-- Divider -->
-                <Border BorderBrush="#DDD" BorderThickness="0,1,0,0" />
-
-                <!-- Validation Issues Section -->
-                <StackPanel Orientation="Vertical" Spacing="6">
+                <!-- Related Issues Section -->
+                <StackPanel Orientation="Vertical" Margin="0,0,0,0">
                     <TextBlock
                         FontSize="10"
                         FontWeight="Bold"
                         Foreground="#666"
-                        Text="{Binding CombinedIssues.Count, StringFormat='VALIDATION ISSUES ({0})'}" />
-                    <ItemsControl
-                        MaxHeight="200"
-                        ItemsSource="{Binding CombinedIssues}"
-                        ScrollViewer.VerticalScrollBarVisibility="Auto">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Margin="0,4,0,4" Orientation="Vertical">
-                                    <StackPanel Margin="0,0,0,2" Orientation="Horizontal" Spacing="6">
-                                        <TextBlock
-                                            FontSize="9"
-                                            FontWeight="Bold"
-                                            Foreground="#C55"
-                                            Text="{Binding Severity}" />
-                                        <TextBlock
-                                            FontSize="9"
-                                            Foreground="#999"
-                                            Text="{Binding UnitId}" />
-                                    </StackPanel>
-                                    <TextBlock
-                                        FontSize="9"
-                                        Foreground="#333"
-                                        Text="{Binding Message}"
-                                        TextWrapping="Wrap" />
-                                    <TextBlock
-                                        FontSize="8"
-                                        Foreground="#060"
-                                        FontStyle="Italic"
-                                        Text="{Binding SuggestedAction}"
-                                        TextWrapping="Wrap" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        Margin="0,0,0,6"
+                        Text="VALIDATION ISSUES" />
                     <TextBlock
-                        FontSize="9"
+                        FontSize="10"
                         Foreground="#999"
-                        Text="No issues"
-                        Visibility="{Binding CombinedIssues.Count, Converter={StaticResource IntToInvisibilityConverter}}" />
+                        Text="{Binding RelatedIssuesMessage}" />
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

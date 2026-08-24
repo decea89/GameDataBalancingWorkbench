@@ -1,46 +1,56 @@
-<UserControl x:Class="BalanceForge.Desktop.Views.BalanceChartView"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
-             xmlns:local="clr-namespace:BalanceForge.Desktop.Views"
-             Background="White"
-             Margin="0">
-    <Grid>
+<UserControl
+    x:Class="BalanceForge.Desktop.Views.BalanceChartView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="#F5F5F5">
+    <Grid Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- Title -->
+        <TextBlock
+            Grid.Row="0"
+            FontSize="12"
+            FontWeight="Bold"
+            Foreground="#333"
+            Text="Unit Balance Metrics" />
+
         <!-- Empty State -->
-        <TextBlock Grid.Row="0" Grid.RowSpan="3" 
-                   Text="No units to display. Load a roster and apply filters to see the chart."
-                   VerticalAlignment="Center" 
-                   HorizontalAlignment="Center"
-                   Foreground="Gray"
-                   FontSize="12"
-                   Visibility="{Binding HasData, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+        <TextBlock
+            Grid.Row="1"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            FontSize="11"
+            Foreground="#999"
+            Text="No units selected. Filter or select units to view their metrics."
+            Visibility="Collapsed"
+            x:Name="EmptyStateMessage" />
 
-        <!-- Chart Title -->
-        <TextBlock Grid.Row="0" Text="{Binding ChartTitle}" FontSize="14" FontWeight="Bold" Margin="10,10,10,5" />
-
-        <!-- LiveCharts2 Chart -->
-        <lvc:CartesianChart Grid.Row="1" 
-                            Margin="10,0,10,10"
-                            Series="{Binding SeriesCollection}"
-                            Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <lvc:CartesianChart.XAxes>
-                <lvc:Axis Labels="{Binding Labels}" />
-            </lvc:CartesianChart.XAxes>
-            <lvc:CartesianChart.YAxes>
-                <lvc:Axis Title="Value" />
-            </lvc:CartesianChart.YAxes>
-            <lvc:CartesianChart.LegendLocation>Top</lvc:CartesianChart.LegendLocation>
-        </lvc:CartesianChart>
-
-        <!-- Footer Info -->
-        <TextBlock Grid.Row="2" Text="Total Cost (blue), DPS (red), Effective Health (green)" 
-                   FontSize="10" Foreground="Gray" Margin="10,5,10,10"
-                   Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        <!-- Data Info -->
+        <ItemsControl
+            Grid.Row="1"
+            x:Name="ChartInfo"
+            ItemsSource="{Binding DisplayedUnits}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="0,4,0,4" BorderBrush="#DDD" BorderThickness="0,1,0,0" Padding="4">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="80" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" FontSize="10" FontWeight="Bold" Text="{Binding DisplayName}" />
+                            <TextBlock Grid.Column="1" FontSize="10" Foreground="#2E75B6" Text="{Binding TotalCost, StringFormat='Cost: {0}'}" />
+                            <TextBlock Grid.Column="2" FontSize="10" Foreground="#C5504C" Text="{Binding DPS, StringFormat='DPS: {0:F1}'}" />
+                            <TextBlock Grid.Column="3" FontSize="10" Foreground="#70AD47" Text="{Binding EffectiveHealth, StringFormat='EH: {0:F1}'}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </UserControl>

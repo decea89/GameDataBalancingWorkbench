@@ -6,6 +6,26 @@ BalanceForge is a portfolio project for a fictional tactical RPG / RTS. It model
 
 The project is intentionally designed as a maintainable internal-tool style application rather than a generic CRUD demo. Its primary user is a game designer, not a programmer.
 
+## Quick Start
+
+1. Launch the application.
+2. Click **Select File** and navigate to `samples/units.json`.
+3. Click **Load** to populate the roster.
+4. Select a unit in the grid to view its stats in the inspector.
+5. **Ctrl+click** another unit to compare side-by-side.
+6. Edit any stat in the inspector; see metrics and validation feedback update in real-time.
+7. Click **Undo** (or Ctrl+Z) to revert changes, or **Redo** (Ctrl+Y) to reapply them.
+8. Click **Save** when ready; unsaved changes are protected by a confirmation dialog.
+
+## Demo
+
+For a complete walkthrough of the MVP workflow, see [DEMO_RECORDING_GUIDE.md](docs/DEMO_RECORDING_GUIDE.md).
+
+To view a live demonstration:
+1. Download and run the application
+2. Follow the Quick Start steps above with `samples/units.json`
+3. The interface will show a balance chart, roster filters, unit inspector, validation panel and comparison view all working together
+
 ## Goals
 
 BalanceForge demonstrates:
@@ -17,18 +37,21 @@ BalanceForge demonstrates:
 - Extensible game-data rules that are independent from the user interface.
 - A foundation for later engine/editor, CI and DCC-facing pipeline integrations.
 
-## MVP
+## MVP (Completed)
 
-The first release focuses on unit balance data.
+The first release focuses on unit balance data and is feature-complete.
 
 ### Supported workflow
 
-1. Load a `units.json` file.
-2. Browse and filter a roster of units.
-3. Edit a selected unit using a DataGrid and detail inspector.
-4. See derived balance metrics update immediately.
-5. Review validation issues that identify the affected unit, explain the rule and suggest an action.
-6. Save validated data explicitly.
+1. Load a `units.json` file (or start with `samples/units.json`).
+2. Browse and filter a roster of units by Role and Tier.
+3. Select a unit to view detailed stats in the inspector.
+4. Edit any unit property; metrics and validation update in real-time.
+5. Compare two units side-by-side: select one unit, then Ctrl+click another.
+6. Review validation issues that identify the affected unit, explain the rule and suggest an action.
+7. Undo/Redo any change with Ctrl+Z / Ctrl+Y.
+8. View a balance chart showing Total Cost, DPS and Effective Health across all displayed units.
+9. Save validated data explicitly when ready.
 
 ### Unit data
 
@@ -145,26 +168,30 @@ BalanceForge.sln
 
 ## Roadmap
 
-### MVP
+### MVP (✅ Completed)
 
-- [ ] Load and save `units.json`
-- [ ] Unit roster DataGrid with filters
-- [ ] Unit detail inspector
-- [ ] Live balance metrics
-- [ ] Validation issue panel
-- [ ] Dirty-state and explicit save workflow
-- [ ] Unit and application-layer tests
+- [x] Load and save `units.json`
+- [x] Unit roster DataGrid with filters by Role and Tier
+- [x] Unit detail inspector with live edits
+- [x] Live balance metrics (DPS, Total Cost, DPS/Cost, Effective Health)
+- [x] Validation issue panel with explainable, actionable feedback
+- [x] Dirty-state and explicit save workflow
+- [x] Undo/Redo for all content edits (Ctrl+Z / Ctrl+Y)
+- [x] Balance chart for visual comparison (Total Cost, DPS, Effective Health)
+- [x] Two-unit comparison panel with Ctrl+click selection
+- [x] Unit and application-layer tests
+- [x] Sample data (`samples/units.json`)
 
 ### Post-MVP
 
-- [ ] Undo/redo for content edits
 - [ ] Compare two data files and present a readable diff
 - [ ] Unit, ability, effect and tag relationships
-- [ ] Charts for tier, cost and effectiveness analysis
+- [ ] Tier and role-relative balance indicators
 - [ ] Deterministic matchup simulation
 - [ ] Headless CLI validation for CI
 - [ ] JSON, Markdown and SARIF reports
 - [ ] Import helpers for design spreadsheets
+- [ ] Animation/visual feedback for edits and validation changes
 
 ## Non-goals
 

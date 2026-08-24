@@ -1,0 +1,64 @@
+{
+  "units": [
+    {
+      "id": "knight",
+      "displayName": "Knight",
+      "role": "Cavalry",
+      "tier": 2,
+      "health": 180,
+      "damage": 18,
+      "attacksPerSecond": 1.1,
+      "armor": 4,
+      "range": 1.5,
+      "woodCost": 0,
+      "goldCost": 90,
+      "populationCost": 2,
+      "productionTimeSeconds": 28
+    },
+    {
+      "id": "spearman",
+      "displayName": "Spearman",
+      "role": "Infantry",
+      "tier": 1,
+      "health": 120,
+      "damage": 12,
+      "attacksPerSecond": 1.5,
+      "armor": 2,
+      "range": 1,
+      "woodCost": 40,
+      "goldCost": 40,
+      "populationCost": 1,
+      "productionTimeSeconds": 18
+    },
+    {
+      "id": "archer",
+      "displayName": "Archer",
+      "role": "Ranged",
+      "tier": 2,
+      "health": 100,
+      "damage": 14,
+      "attacksPerSecond": 1.8,
+      "armor": 1,
+      "range": 8,
+      "woodCost": 60,
+      "goldCost": 40,
+      "populationCost": 1,
+      "productionTimeSeconds": 20
+    },
+    {
+      "id": "cleric",
+      "displayName": "Cleric",
+      "role": "Support",
+      "tier": 1,
+      "health": 110,
+      "damage": 0,
+      "attacksPerSecond": 0,
+      "armor": 2,
+      "range": 0,
+      "woodCost": 20,
+      "goldCost": 50,
+      "populationCost": 1,
+      "productionTimeSeconds": 15
+    }
+  ]
+}

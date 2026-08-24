@@ -6,6 +6,10 @@
         xmlns:local="clr-namespace:BalanceForge.Desktop"
         mc:Ignorable="d"
         Title="{Binding Title}" Height="700" Width="1400">
+    <Window.InputBindings>
+        <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoCommand}" />
+        <KeyBinding Key="Y" Modifiers="Ctrl" Command="{Binding RedoCommand}" />
+    </Window.InputBindings>
     <DockPanel>
         <!-- Top toolbar -->
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="10" Height="Auto">
@@ -14,6 +18,20 @@
             </Button>
             <Button Command="{Binding LoadCommand}" Padding="10,5" Margin="0,0,10,0">
                 Load
+            </Button>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0" />
+            <Button Command="{Binding UndoCommand}" Padding="10,5" Margin="0,0,10,0" IsEnabled="{Binding CanUndo}">
+                Undo
+            </Button>
+            <Button Command="{Binding RedoCommand}" Padding="10,5" Margin="0,0,10,0" IsEnabled="{Binding CanRedo}">
+                Redo
+            </Button>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0" />
+            <Button Command="{Binding SaveCommand}" Padding="10,5" Margin="0,0,10,0" IsEnabled="{Binding IsDirty}">
+                Save
+            </Button>
+            <Button Command="{Binding SaveAsCommand}" Padding="10,5" Margin="0,0,10,0">
+                Save As
             </Button>
             <TextBlock Text="{Binding SelectedFilePath}" Margin="10,0" VerticalAlignment="Center" Foreground="Gray" FontSize="11" Width="300" TextTrimming="CharacterEllipsis"/>
             <TextBlock Text="{Binding IsDirty, StringFormat='  Unsaved: {0}'}" Margin="20,0,0,0" VerticalAlignment="Center" Foreground="Red" FontWeight="Bold" />
@@ -68,10 +86,15 @@
             </TextBlock>
         </StackPanel>
 
-        <!-- Error message -->
-        <TextBlock DockPanel.Dock="Top" Margin="10,0,10,10" Foreground="Red" TextWrapping="Wrap">
-            <Run Text="{Binding ErrorMessage}" />
-        </TextBlock>
+        <!-- Error and status messages -->
+        <StackPanel DockPanel.Dock="Top" Margin="10,0,10,10">
+            <TextBlock Foreground="Red" TextWrapping="Wrap">
+                <Run Text="{Binding ErrorMessage}" />
+            </TextBlock>
+            <TextBlock Foreground="Green" TextWrapping="Wrap" Margin="0,5,0,0" FontStyle="Italic">
+                <Run Text="{Binding StatusMessage}" />
+            </TextBlock>
+        </StackPanel>
 
         <!-- Main content area: DataGrid + Inspector -->
         <Grid DockPanel.Dock="Bottom">

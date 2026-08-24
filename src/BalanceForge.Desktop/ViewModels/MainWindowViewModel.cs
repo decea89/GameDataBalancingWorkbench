@@ -3,6 +3,7 @@ namespace BalanceForge.Desktop.ViewModels;
 using System.Collections.ObjectModel;
 using BalanceForge.Application;
 using BalanceForge.Application.Services;
+using BalanceForge.Application.UndoRedo;
 using BalanceForge.Application.UseCases;
 using BalanceForge.Desktop.Services;
 using BalanceForge.Domain;
@@ -17,8 +18,10 @@ public partial class MainWindowViewModel : ObservableObject
 {
     private readonly IFileDialogService _fileDialogService;
     private readonly ILoadRosterUseCase _loadRosterUseCase;
+    private readonly ISaveRosterUseCase _saveRosterUseCase;
     private readonly BalanceMetricsCalculator _metricsCalculator;
     private readonly UnitValidationService _validationService;
+    private readonly UndoRedoStack _undoRedoStack = new();
 
     [ObservableProperty]
     private string title = "BalanceForge - Unit Balance Editor";
@@ -62,6 +65,15 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private IssuesPanelViewModel issuesPanel = new();
 
+    [ObservableProperty]
+    private string statusMessage = string.Empty;
+
+    [ObservableProperty]
+    private bool canUndo;
+
+    [ObservableProperty]
+    private bool canRedo;
+
     public IReadOnlyList<UnitRole> AvailableRoles => Enum.GetValues<UnitRole>().ToList();
 
     public IReadOnlyList<int> AvailableTiers => Enumerable.Range(1, 10).ToList();
@@ -71,6 +83,7 @@ public partial class MainWindowViewModel : ObservableObject
         // For XAML designer support
         _fileDialogService = null!;
         _loadRosterUseCase = null!;
+        _saveRosterUseCase = null!;
         _metricsCalculator = null!;
         _validationService = null!;
     }
@@ -78,14 +91,21 @@ public partial class MainWindowViewModel : ObservableObject
     public MainWindowViewModel(
         IFileDialogService fileDialogService,
         ILoadRosterUseCase loadRosterUseCase,
+        ISaveRosterUseCase saveRosterUseCase,
         BalanceMetricsCalculator metricsCalculator,
         UnitValidationService validationService)
     {
         _fileDialogService = fileDialogService ?? throw new ArgumentNullException(nameof(fileDialogService));
         _loadRosterUseCase = loadRosterUseCase ?? throw new ArgumentNullException(nameof(loadRosterUseCase));
+        _saveRosterUseCase = saveRosterUseCase ?? throw new ArgumentNullException(nameof(saveRosterUseCase));
         _metricsCalculator = metricsCalculator ?? throw new ArgumentNullException(nameof(metricsCalculator));
         _validationService = validationService ?? throw new ArgumentNullException(nameof(validationService));
         Inspector.PropertyChanged += (s, e) => IsDirty = Inspector.HasUnsavedChanges;
+        _undoRedoStack.StackChanged += (s, e) =>
+        {
+            CanUndo = _undoRedoStack.CanUndo;
+            CanRedo = _undoRedoStack.CanRedo;
+        };
     }
 
     [RelayCommand]
@@ -165,12 +185,80 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public void Undo()
+    {
+        var command = _undoRedoStack.Undo();
+        if (command != null && SelectedUnit != null)
+        {
+            // Find the unit in our collection and restore its old value
+            var unitToUndo = Units.FirstOrDefault(u => u.Id == command.UnitId);
+            if (unitToUndo != null)
+            {
+                // Use reflection to set the property to its old value
+                var property = typeof(UnitDefinition).GetProperty(command.PropertyName);
+                if (property?.CanWrite == true)
+                {
+                    property.SetValue(unitToUndo, command.OldValue);
+
+                    // Reload inspector with the reverted unit
+                    var displayUnit = DisplayedUnits.FirstOrDefault(u => u.Id == command.UnitId);
+                    if (displayUnit != null)
+                    {
+                        Inspector.LoadFromUnit(unitToUndo, this);
+                        // Revalidate and update metrics
+                        RefreshValidationAndMetrics();
+                    }
+                }
+            }
+        }
+    }
+
+    [RelayCommand]
+    public void Redo()
+    {
+        var command = _undoRedoStack.Redo();
+        if (command != null && SelectedUnit != null)
+        {
+            // Find the unit in our collection and restore its new value
+            var unitToRedo = Units.FirstOrDefault(u => u.Id == command.UnitId);
+            if (unitToRedo != null)
+            {
+                // Use reflection to set the property to its new value
+                var property = typeof(UnitDefinition).GetProperty(command.PropertyName);
+                if (property?.CanWrite == true)
+                {
+                    property.SetValue(unitToRedo, command.NewValue);
+
+                    // Reload inspector with the redone unit
+                    var displayUnit = DisplayedUnits.FirstOrDefault(u => u.Id == command.UnitId);
+                    if (displayUnit != null)
+                    {
+                        Inspector.LoadFromUnit(unitToRedo, this);
+                        // Revalidate and update metrics
+                        RefreshValidationAndMetrics();
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Records a field edit in the undo/redo stack.
+    /// Called by UnitInspectorViewModel when a field changes.
+    /// </summary>
+    public void RecordUnitEdit(string unitId, string propertyName, object? oldValue, object? newValue)
+    {
+        var command = new UnitEditCommand(unitId, propertyName, oldValue, newValue);
+        _undoRedoStack.Push(command);
+    }
+
+    [RelayCommand]
     public void SelectUnit(RosterUnitViewModel? unit)
     {
         SelectedUnit = unit;
         if (unit != null)
         {
-            Inspector.LoadFromUnit(unit.UnitDefinition);
+            Inspector.LoadFromUnit(unit.UnitDefinition, this);
         }
         else
         {
@@ -209,6 +297,16 @@ public partial class MainWindowViewModel : ObservableObject
         unit.ProductionTimeSeconds = Inspector.ProductionTimeSeconds;
 
         // Revalidate all units
+        RefreshValidationAndMetrics();
+
+        // Update roster with the edited unit
+        ApplyFilters();
+        Inspector.ClearUnsavedChanges();
+        IsDirty = false;
+    }
+
+    private void RefreshValidationAndMetrics()
+    {
         var allIssues = Units
             .SelectMany(u => _validationService.Validate(u))
             .Concat(_validationService.ValidateRoster(Units.ToList()))
@@ -217,11 +315,6 @@ public partial class MainWindowViewModel : ObservableObject
         ValidationIssueCount = allIssues.Count;
         ErrorMessage = string.Empty;
         IssuesPanel.UpdateIssues(allIssues);
-
-        // Update roster with the edited unit
-        ApplyFilters();
-        Inspector.ClearUnsavedChanges();
-        IsDirty = false;
     }
 
     [RelayCommand]
@@ -236,6 +329,58 @@ public partial class MainWindowViewModel : ObservableObject
         {
             SelectedUnit = affectedUnit;
             Inspector.LoadFromUnit(affectedUnit.UnitDefinition);
+        }
+    }
+
+    [RelayCommand]
+    public async Task Save()
+    {
+        if (string.IsNullOrEmpty(SelectedFilePath) || !System.IO.File.Exists(SelectedFilePath))
+        {
+            ErrorMessage = "No file loaded. Please load or save to a file first.";
+            return;
+        }
+
+        await SaveToFile(SelectedFilePath);
+    }
+
+    [RelayCommand]
+    public async Task SaveAs()
+    {
+        var filePath = await _fileDialogService.OpenFileAsync();
+        if (!string.IsNullOrEmpty(filePath))
+        {
+            SelectedFilePath = filePath;
+            await SaveToFile(filePath);
+        }
+    }
+
+    private async Task SaveToFile(string filePath)
+    {
+        try
+        {
+            StatusMessage = "Saving...";
+            ErrorMessage = string.Empty;
+
+            await _saveRosterUseCase.ExecuteAsync(filePath, Units.ToList());
+
+            // Success
+            IsDirty = false;
+            Inspector.ClearUnsavedChanges();
+            StatusMessage = $"Saved successfully to {System.IO.Path.GetFileName(filePath)}";
+            ErrorMessage = string.Empty;
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Validation errors; units remain in-memory
+            ErrorMessage = $"Cannot save: {ex.Message}";
+            StatusMessage = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            // Other errors; units remain in-memory
+            ErrorMessage = $"Save failed: {ex.Message}";
+            StatusMessage = string.Empty;
         }
     }
 }

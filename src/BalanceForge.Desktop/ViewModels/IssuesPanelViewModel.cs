@@ -15,6 +15,9 @@ public partial class IssuesPanelViewModel : ObservableObject
     private ObservableCollection<ValidationIssue> displayedIssues = new();
 
     [ObservableProperty]
+    private int displayedIssueCount;
+
+    [ObservableProperty]
     private ObservableCollection<ValidationSeverity> severityFilters = new(new[]
     {
         ValidationSeverity.Info,
@@ -73,8 +76,10 @@ public partial class IssuesPanelViewModel : ObservableObject
             .ToList();
 
         DisplayedIssues = new ObservableCollection<ValidationIssue>(filtered);
+        DisplayedIssueCount = filtered.Count;
     }
 
+    [RelayCommand]
     public void ClearFilters()
     {
         SeverityFilters = new ObservableCollection<ValidationSeverity>(new[]

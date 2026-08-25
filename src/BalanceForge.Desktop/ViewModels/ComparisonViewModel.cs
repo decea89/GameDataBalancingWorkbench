@@ -24,6 +24,15 @@ public partial class ComparisonViewModel : ObservableObject
     private ObservableCollection<ValidationIssue> combinedIssues = new();
 
     [ObservableProperty]
+    private ObservableCollection<StatComparison> baseStats = new();
+
+    [ObservableProperty]
+    private ObservableCollection<MetricComparison> derivedMetrics = new();
+
+    [ObservableProperty]
+    private string relatedIssuesMessage = "No validation issues for the selected units.";
+
+    [ObservableProperty]
     private bool hasComparison = false;
 
     [ObservableProperty]
@@ -49,7 +58,7 @@ public partial class ComparisonViewModel : ObservableObject
             UnitB = null;
             HasComparison = false;
             ComparisonStatus = "Select 2 different units to compare.";
-            CombinedIssues.Clear();
+            ClearComparisonData();
             return;
         }
 
@@ -60,7 +69,7 @@ public partial class ComparisonViewModel : ObservableObject
             UnitB = unitB;
             HasComparison = false;
             ComparisonStatus = "Select a second unit to compare.";
-            CombinedIssues.Clear();
+            ClearComparisonData();
             return;
         }
 
@@ -71,7 +80,7 @@ public partial class ComparisonViewModel : ObservableObject
             UnitB = unitB;
             HasComparison = true;
             ComparisonStatus = $"Comparing {unitA.DisplayName} with itself.";
-            RefreshValidationIssues(unitA.UnitDefinition, unitB.UnitDefinition);
+            RefreshComparisonData(unitA.UnitDefinition, unitB.UnitDefinition);
             return;
         }
 
@@ -80,7 +89,7 @@ public partial class ComparisonViewModel : ObservableObject
         UnitB = unitB;
         HasComparison = true;
         ComparisonStatus = $"Comparing {unitA.DisplayName} vs {unitB.DisplayName}";
-        RefreshValidationIssues(unitA.UnitDefinition, unitB.UnitDefinition);
+        RefreshComparisonData(unitA.UnitDefinition, unitB.UnitDefinition);
     }
 
     /// <summary>
@@ -90,24 +99,53 @@ public partial class ComparisonViewModel : ObservableObject
     {
         if (UnitA?.UnitDefinition != null && UnitB?.UnitDefinition != null)
         {
-            RefreshValidationIssues(UnitA.UnitDefinition, UnitB.UnitDefinition);
+            RefreshComparisonData(UnitA.UnitDefinition, UnitB.UnitDefinition);
         }
     }
 
-    private void RefreshValidationIssues(UnitDefinition unitDefA, UnitDefinition unitDefB)
+    private void RefreshComparisonData(UnitDefinition unitDefA, UnitDefinition unitDefB)
     {
-        var issuesA = _validationService.ValidateUnit(unitDefA).ToList();
-        var issuesB = _validationService.ValidateUnit(unitDefB).ToList();
+        BaseStats = new ObservableCollection<StatComparison>(
+            new[]
+            {
+                "Health", "Damage", "Atk/Sec", "Armor", "Range",
+                "Wood Cost", "Gold Cost", "Pop Cost", "Prod Time"
+            }
+            .Select(GetStatComparison)
+            .OfType<StatComparison>());
 
-        var combined = new List<ValidationIssue>();
-        combined.AddRange(issuesA);
-        combined.AddRange(issuesB);
+        DerivedMetrics = new ObservableCollection<MetricComparison>(
+            new[] { "TotalCost", "DPS", "DPS/Cost", "Effective Health" }
+                .Select(GetMetricComparison)
+                .OfType<MetricComparison>());
+
+        var issuesA = _validationService.Validate(unitDefA);
+        var issuesB = _validationService.Validate(unitDefB);
+
+        var combined = issuesA
+            .Concat(issuesB)
+            .DistinctBy(issue => (issue.RuleId, issue.UnitId, issue.Message))
+            .OrderByDescending(issue => issue.Severity)
+            .ThenBy(issue => issue.Message)
+            .ToList();
 
         CombinedIssues.Clear();
-        foreach (var issue in combined.OrderByDescending(x => x.Severity).ThenBy(x => x.Message))
+        foreach (var issue in combined)
         {
             CombinedIssues.Add(issue);
         }
+
+        RelatedIssuesMessage = combined.Count == 0
+            ? "No validation issues for the selected units."
+            : $"{combined.Count} validation issue{(combined.Count == 1 ? string.Empty : "s")} found.";
+    }
+
+    private void ClearComparisonData()
+    {
+        BaseStats.Clear();
+        DerivedMetrics.Clear();
+        CombinedIssues.Clear();
+        RelatedIssuesMessage = "No validation issues for the selected units.";
     }
 
     /// <summary>

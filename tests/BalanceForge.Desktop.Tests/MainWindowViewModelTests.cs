@@ -20,10 +20,16 @@ public class MainWindowViewModelTests
             .ReturnsAsync("/path/to/units.json");
 
         var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
+        var mockSaveUseCase = new Mock<ISaveRosterUseCase>();
         var calculator = new BalanceMetricsCalculator();
         var validator = new UnitValidationService();
 
-        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, calculator, validator);
+        var viewModel = new MainWindowViewModel(
+            mockFileDialog.Object,
+            mockLoadUseCase.Object,
+            mockSaveUseCase.Object,
+            calculator,
+            validator);
 
         // Act
         await viewModel.SelectFileCommand.ExecuteAsync(null);
@@ -199,6 +205,7 @@ public class MainWindowViewModelTests
         // Arrange
         var mockFileDialog = new Mock<IFileDialogService>();
         var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
+        var mockSaveUseCase = new Mock<ISaveRosterUseCase>();
         var calculator = new BalanceMetricsCalculator();
         var validator = new UnitValidationService();
 
@@ -336,11 +343,7 @@ public class MainWindowViewModelTests
             ProductionTimeSeconds = 10
         };
 
-        var mockFileDialog = new Mock<IFileDialogService>();
-        var mockLoadUseCase = new Mock<ILoadRosterUseCase>();
         var mockSaveUseCase = new Mock<ISaveRosterUseCase>();
-        var calculator = new BalanceMetricsCalculator();
-        var validator = new UnitValidationService();
 
         var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, mockSaveUseCase.Object, calculator, validator);
         viewModel.Units = new System.Collections.ObjectModel.ObservableCollection<UnitDefinition>(new[] { unit });
@@ -389,19 +392,27 @@ public class MainWindowViewModelTests
             .Setup(x => x.ExecuteAsync(It.IsAny<string>(), It.IsAny<List<UnitDefinition>>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, mockSaveUseCase.Object, calculator, validator);
-        viewModel.SelectedFilePath = "/path/to/units.json";
-        viewModel.Units = new System.Collections.ObjectModel.ObservableCollection<UnitDefinition>(new[] { unit });
-        viewModel.IsDirty = true;
+        var filePath = Path.GetTempFileName();
+        try
+        {
+            var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, mockSaveUseCase.Object, calculator, validator);
+            viewModel.SelectedFilePath = filePath;
+            viewModel.Units = new System.Collections.ObjectModel.ObservableCollection<UnitDefinition>(new[] { unit });
+            viewModel.IsDirty = true;
 
-        // Act
-        await viewModel.SaveCommand.ExecuteAsync(null);
+            // Act
+            await viewModel.SaveCommand.ExecuteAsync(null);
 
-        // Assert
-        Assert.False(viewModel.IsDirty);
-        Assert.Contains("Saved successfully", viewModel.StatusMessage);
-        Assert.Empty(viewModel.ErrorMessage);
-        mockSaveUseCase.Verify(x => x.ExecuteAsync("/path/to/units.json", It.IsAny<List<UnitDefinition>>(), It.IsAny<CancellationToken>()), Times.Once);
+            // Assert
+            Assert.False(viewModel.IsDirty);
+            Assert.Contains("Saved to", viewModel.StatusMessage);
+            Assert.Empty(viewModel.ErrorMessage);
+            mockSaveUseCase.Verify(x => x.ExecuteAsync(filePath, It.IsAny<List<UnitDefinition>>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
     }
 
     [Fact]
@@ -456,18 +467,26 @@ public class MainWindowViewModelTests
             ProductionTimeSeconds = 10
         };
 
-        var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, mockSaveUseCase.Object, calculator, validator);
-        viewModel.SelectedFilePath = "/path/to/units.json";
-        viewModel.Units = new System.Collections.ObjectModel.ObservableCollection<UnitDefinition>(new[] { unit });
-        viewModel.IsDirty = true;
+        var filePath = Path.GetTempFileName();
+        try
+        {
+            var viewModel = new MainWindowViewModel(mockFileDialog.Object, mockLoadUseCase.Object, mockSaveUseCase.Object, calculator, validator);
+            viewModel.SelectedFilePath = filePath;
+            viewModel.Units = new System.Collections.ObjectModel.ObservableCollection<UnitDefinition>(new[] { unit });
+            viewModel.IsDirty = true;
 
-        // Act
-        await viewModel.SaveCommand.ExecuteAsync(null);
+            // Act
+            await viewModel.SaveCommand.ExecuteAsync(null);
 
-        // Assert
-        Assert.True(viewModel.IsDirty);
-        Assert.Contains("Cannot save", viewModel.ErrorMessage);
-        Assert.Single(viewModel.Units);
+            // Assert
+            Assert.True(viewModel.IsDirty);
+            Assert.Contains("Cannot save", viewModel.ErrorMessage);
+            Assert.Single(viewModel.Units);
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
     }
 
     [Fact]
@@ -543,8 +562,26 @@ public class MainWindowViewModelTests
         var calculator = new BalanceMetricsCalculator();
         var validator = new UnitValidationService();
 
-        var unit = new UnitDefinition { Id = "warrior", DisplayName = "Warrior", Role = UnitRole.Infantry, Tier = 1, Health = 100, Damage = 10, AttacksPerSecond = 1 };
-        var result = new RosterLoadResult { Units = new[] { unit }.ToList(), ValidationIssues = new List<ValidationIssue>(), HasErrors = false };
+        var unit = new UnitDefinition
+        {
+            Id = "warrior",
+            DisplayName = "Warrior",
+            Role = UnitRole.Infantry,
+            Tier = 1,
+            Health = 100,
+            Damage = 10,
+            AttacksPerSecond = 1,
+            Armor = 0,
+            Range = 1,
+            WoodCost = 50,
+            GoldCost = 0,
+            PopulationCost = 1,
+            ProductionTimeSeconds = 10
+        };
+        var result = new RosterLoadResult(
+            new[] { unit }.ToList().AsReadOnly(),
+            new List<ValidationIssue>().AsReadOnly(),
+            false);
 
         mockLoadUseCase
             .Setup(x => x.ExecuteAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))

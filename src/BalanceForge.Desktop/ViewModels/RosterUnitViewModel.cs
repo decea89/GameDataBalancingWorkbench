@@ -2,12 +2,13 @@ namespace BalanceForge.Desktop.ViewModels;
 
 using BalanceForge.Application;
 using BalanceForge.Domain;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 /// <summary>
 /// View model wrapper for a unit definition with calculated metrics.
 /// Used to expose both domain model and calculated values for UI binding.
 /// </summary>
-public class RosterUnitViewModel
+public class RosterUnitViewModel : ObservableObject
 {
     private readonly UnitDefinition _unit;
     private readonly BalanceMetricsCalculator _calculator;
@@ -65,4 +66,27 @@ public class RosterUnitViewModel
 
     // For filtering
     public UnitDefinition UnitDefinition => _unit;
+
+    /// <summary>
+    /// Notifies the UI that the underlying unit and its calculated metrics changed.
+    /// </summary>
+    public void Refresh()
+    {
+        OnPropertyChanged(nameof(DisplayName));
+        OnPropertyChanged(nameof(Role));
+        OnPropertyChanged(nameof(Tier));
+        OnPropertyChanged(nameof(Health));
+        OnPropertyChanged(nameof(Damage));
+        OnPropertyChanged(nameof(AttacksPerSecond));
+        OnPropertyChanged(nameof(Armor));
+        OnPropertyChanged(nameof(Range));
+        OnPropertyChanged(nameof(WoodCost));
+        OnPropertyChanged(nameof(GoldCost));
+        OnPropertyChanged(nameof(PopulationCost));
+        OnPropertyChanged(nameof(ProductionTimeSeconds));
+        OnPropertyChanged(nameof(TotalCost));
+        OnPropertyChanged(nameof(DPS));
+        OnPropertyChanged(nameof(DPSPerCost));
+        OnPropertyChanged(nameof(EffectiveHealth));
+    }
 }

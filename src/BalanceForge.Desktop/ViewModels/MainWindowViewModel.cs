@@ -23,6 +23,8 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly UnitValidationService _validationService;
     private readonly UndoRedoStack _undoRedoStack = new();
     private RosterUnitViewModel? _comparisonUnitForCtrlClick;
+    private int _historyPosition;
+    private int _savedHistoryPosition;
 
     [ObservableProperty]
     private string title = "BalanceForge - Unit Balance Editor";
@@ -54,20 +56,33 @@ public partial class MainWindowViewModel : ObservableObject
     private ObservableCollection<RosterUnitViewModel> displayedUnits = new();
 
     [ObservableProperty]
+    private int displayedUnitCount;
+
+    [ObservableProperty]
     private HashSet<UnitRole> selectedRoles = new(Enum.GetValues<UnitRole>());
 
     [ObservableProperty]
     private HashSet<int> selectedTiers = new();
 
     [ObservableProperty]
+    private ObservableCollection<FilterOptionViewModel<UnitRole>> roleFilters = new();
+
+    [ObservableProperty]
+    private ObservableCollection<FilterOptionViewModel<int>> tierFilters = new();
+
+    [ObservableProperty]
     private RosterUnitViewModel? selectedUnit;
 
     partial void OnSelectedUnitChanged(RosterUnitViewModel? value)
     {
-        // Sync comparison when selected unit changes
-        if (Comparison != null && _comparisonUnitForCtrlClick != null)
+        if (value != null)
         {
-            Comparison.SetComparison(value, _comparisonUnitForCtrlClick);
+            Inspector.LoadFromUnit(value.UnitDefinition, this);
+        }
+
+        if (_comparisonUnitForCtrlClick != null)
+        {
+            Comparison?.SetComparison(value, _comparisonUnitForCtrlClick);
         }
     }
 
@@ -110,6 +125,8 @@ public partial class MainWindowViewModel : ObservableObject
 
     public IReadOnlyList<int> AvailableTiers => Enumerable.Range(1, 10).ToList();
 
+    public IReadOnlyList<string> AvailableRoleNames => Enum.GetNames<UnitRole>();
+
     public MainWindowViewModel()
     {
         // For XAML designer support
@@ -120,6 +137,7 @@ public partial class MainWindowViewModel : ObservableObject
         _validationService = null!;
         BalanceChart = null!;
         Comparison = null!;
+        InitializeDefaultFilters();
     }
 
     public MainWindowViewModel(
@@ -136,7 +154,7 @@ public partial class MainWindowViewModel : ObservableObject
         _validationService = validationService ?? throw new ArgumentNullException(nameof(validationService));
         BalanceChart = new BalanceChartViewModel(_metricsCalculator);
         Comparison = new ComparisonViewModel(_metricsCalculator, _validationService);
-        Inspector.PropertyChanged += (s, e) => IsDirty = Inspector.HasUnsavedChanges;
+        InitializeDefaultFilters();
         _undoRedoStack.StackChanged += (s, e) =>
         {
             CanUndo = _undoRedoStack.CanUndo;
@@ -188,9 +206,7 @@ public partial class MainWindowViewModel : ObservableObject
             ValidationIssueCount = result.ValidationIssues.Count;
             IssuesPanel.UpdateIssues(result.ValidationIssues);
 
-            // Initialize tiers from loaded units
-            var loadedTiers = Units.Select(u => u.Tier).Distinct().ToHashSet();
-            SelectedTiers = new HashSet<int>(loadedTiers);
+            InitializeFiltersFromLoadedUnits();
 
             // Apply filters and populate DisplayedUnits
             ApplyFilters();
@@ -200,6 +216,8 @@ public partial class MainWindowViewModel : ObservableObject
             _undoRedoStack.Clear();
             CanUndo = false;
             CanRedo = false;
+            _historyPosition = 0;
+            _savedHistoryPosition = 0;
             Inspector.ClearUnsavedChanges();
         }
         catch (Exception ex)
@@ -207,6 +225,7 @@ public partial class MainWindowViewModel : ObservableObject
             ErrorMessage = $"Failed to load roster: {ex.Message}";
             Units.Clear();
             DisplayedUnits.Clear();
+            DisplayedUnitCount = 0;
             LoadedUnitCount = 0;
             ValidationIssueCount = 0;
         }
@@ -225,13 +244,14 @@ public partial class MainWindowViewModel : ObservableObject
             .ToList();
 
         DisplayedUnits = new ObservableCollection<RosterUnitViewModel>(filtered);
+        DisplayedUnitCount = filtered.Count;
     }
 
     [RelayCommand]
     public void Undo()
     {
         var command = _undoRedoStack.Undo();
-        if (command != null && SelectedUnit != null)
+        if (command != null)
         {
             // Find the unit in our collection and restore its old value
             var unitToUndo = Units.FirstOrDefault(u => u.Id == command.UnitId);
@@ -243,14 +263,19 @@ public partial class MainWindowViewModel : ObservableObject
                 {
                     property.SetValue(unitToUndo, command.OldValue);
 
-                    // Reload inspector with the reverted unit
-                    var displayUnit = DisplayedUnits.FirstOrDefault(u => u.Id == command.UnitId);
-                    if (displayUnit != null)
+                    _historyPosition--;
+                    IsDirty = _historyPosition != _savedHistoryPosition;
+
+                    if (SelectedUnit?.Id == command.UnitId)
                     {
                         Inspector.LoadFromUnit(unitToUndo, this);
-                        // Revalidate and update metrics
-                        RefreshValidationAndMetrics();
+                        if (IsDirty)
+                        {
+                            Inspector.MarkAsChanged();
+                        }
                     }
+
+                    RefreshUnitPresentation(command.UnitId);
                 }
             }
         }
@@ -260,7 +285,7 @@ public partial class MainWindowViewModel : ObservableObject
     public void Redo()
     {
         var command = _undoRedoStack.Redo();
-        if (command != null && SelectedUnit != null)
+        if (command != null)
         {
             // Find the unit in our collection and restore its new value
             var unitToRedo = Units.FirstOrDefault(u => u.Id == command.UnitId);
@@ -272,14 +297,19 @@ public partial class MainWindowViewModel : ObservableObject
                 {
                     property.SetValue(unitToRedo, command.NewValue);
 
-                    // Reload inspector with the redone unit
-                    var displayUnit = DisplayedUnits.FirstOrDefault(u => u.Id == command.UnitId);
-                    if (displayUnit != null)
+                    _historyPosition++;
+                    IsDirty = _historyPosition != _savedHistoryPosition;
+
+                    if (SelectedUnit?.Id == command.UnitId)
                     {
                         Inspector.LoadFromUnit(unitToRedo, this);
-                        // Revalidate and update metrics
-                        RefreshValidationAndMetrics();
+                        if (IsDirty)
+                        {
+                            Inspector.MarkAsChanged();
+                        }
                     }
+
+                    RefreshUnitPresentation(command.UnitId);
                 }
             }
         }
@@ -291,8 +321,53 @@ public partial class MainWindowViewModel : ObservableObject
     /// </summary>
     public void RecordUnitEdit(string unitId, string propertyName, object? oldValue, object? newValue)
     {
-        var command = new UnitEditCommand(unitId, propertyName, oldValue, newValue);
+        var unit = Units.FirstOrDefault(candidate => candidate.Id == unitId);
+        if (unit == null)
+        {
+            return;
+        }
+
+        var domainPropertyName = propertyName == nameof(UnitInspectorViewModel.UnitRole)
+            ? nameof(UnitDefinition.Role)
+            : propertyName;
+        var property = typeof(UnitDefinition).GetProperty(domainPropertyName);
+        if (property?.CanWrite != true)
+        {
+            return;
+        }
+
+        object? convertedValue = newValue;
+        if (domainPropertyName == nameof(UnitDefinition.Role))
+        {
+            if (newValue is not string roleText ||
+                !Enum.TryParse<UnitRole>(roleText, ignoreCase: true, out var parsedRole))
+            {
+                ErrorMessage = $"Invalid role: {newValue}";
+                return;
+            }
+
+            convertedValue = parsedRole;
+        }
+
+        var currentValue = property.GetValue(unit);
+        if (Equals(currentValue, convertedValue))
+        {
+            return;
+        }
+
+        if (_undoRedoStack.CanRedo && _savedHistoryPosition > _historyPosition)
+        {
+            _savedHistoryPosition = int.MinValue;
+        }
+
+        property.SetValue(unit, convertedValue);
+        var command = new UnitEditCommand(unitId, domainPropertyName, currentValue, convertedValue);
         _undoRedoStack.Push(command);
+        _historyPosition++;
+        IsDirty = _historyPosition != _savedHistoryPosition;
+        StatusMessage = string.Empty;
+        ErrorMessage = string.Empty;
+        RefreshUnitPresentation(unitId);
     }
 
     [RelayCommand]
@@ -305,8 +380,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
         else
         {
-            // Clear inspector
-            Inspector = new UnitInspectorViewModel();
+            Comparison?.SetComparison(null, _comparisonUnitForCtrlClick);
         }
     }
 
@@ -368,10 +442,7 @@ public partial class MainWindowViewModel : ObservableObject
         // Revalidate all units
         RefreshValidationAndMetrics();
 
-        // Update roster with the edited unit
-        ApplyFilters();
-        Inspector.ClearUnsavedChanges();
-        IsDirty = false;
+        RefreshUnitPresentation(unit.Id);
     }
 
     private void RefreshValidationAndMetrics()
@@ -389,6 +460,94 @@ public partial class MainWindowViewModel : ObservableObject
         Comparison?.RefreshComparison();
     }
 
+    private void RefreshUnitPresentation(string unitId)
+    {
+        DisplayedUnits.FirstOrDefault(unit => unit.Id == unitId)?.Refresh();
+        BalanceChart?.UpdateChartData(DisplayedUnits);
+        RefreshValidationAndMetrics();
+    }
+
+    private void InitializeDefaultFilters()
+    {
+        SetRoleFilters(Enum.GetValues<UnitRole>());
+        SetTierFilters(Enumerable.Range(1, 4));
+    }
+
+    private void InitializeFiltersFromLoadedUnits()
+    {
+        var roles = Units
+            .Select(unit => unit.Role)
+            .Distinct()
+            .OrderBy(role => role)
+            .ToList();
+        var highestTier = Math.Max(4, Units.Select(unit => unit.Tier).DefaultIfEmpty(1).Max());
+
+        SetRoleFilters(roles);
+        SetTierFilters(Enumerable.Range(1, highestTier));
+    }
+
+    private void SetRoleFilters(IEnumerable<UnitRole> roles)
+    {
+        var options = roles
+            .Select(role => new FilterOptionViewModel<UnitRole>(role))
+            .ToList();
+
+        foreach (var option in options)
+        {
+            option.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName != nameof(FilterOptionViewModel<UnitRole>.IsSelected))
+                {
+                    return;
+                }
+
+                if (option.IsSelected)
+                {
+                    SelectedRoles.Add(option.Value);
+                }
+                else
+                {
+                    SelectedRoles.Remove(option.Value);
+                }
+            };
+        }
+
+        RoleFilters = new ObservableCollection<FilterOptionViewModel<UnitRole>>(options);
+        SelectedRoles = options.Select(option => option.Value).ToHashSet();
+    }
+
+    private void SetTierFilters(IEnumerable<int> tiers)
+    {
+        var options = tiers
+            .Distinct()
+            .OrderBy(tier => tier)
+            .Select(tier => new FilterOptionViewModel<int>(tier))
+            .ToList();
+
+        foreach (var option in options)
+        {
+            option.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName != nameof(FilterOptionViewModel<int>.IsSelected))
+                {
+                    return;
+                }
+
+                if (option.IsSelected)
+                {
+                    SelectedTiers.Add(option.Value);
+                }
+                else
+                {
+                    SelectedTiers.Remove(option.Value);
+                }
+            };
+        }
+
+        TierFilters = new ObservableCollection<FilterOptionViewModel<int>>(options);
+        SelectedTiers = options.Select(option => option.Value).ToHashSet();
+    }
+
     [RelayCommand]
     public void SelectIssue(ValidationIssue? issue)
     {
@@ -400,11 +559,11 @@ public partial class MainWindowViewModel : ObservableObject
         if (affectedUnit != null)
         {
             SelectedUnit = affectedUnit;
-            Inspector.LoadFromUnit(affectedUnit.UnitDefinition);
+            Inspector.LoadFromUnit(affectedUnit.UnitDefinition, this);
         }
     }
 
-    [RelayCommand(CanExecutePropertyName = nameof(CanExecuteSave))]
+    [RelayCommand(CanExecute = nameof(CanExecuteSave))]
     public async Task Save()
     {
         if (string.IsNullOrEmpty(SelectedFilePath) || !System.IO.File.Exists(SelectedFilePath))
@@ -440,6 +599,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             // Success
             IsDirty = false;
+            _savedHistoryPosition = _historyPosition;
             Inspector.ClearUnsavedChanges();
             StatusMessage = $"✓ Saved to {System.IO.Path.GetFileName(filePath)}";
             ErrorMessage = string.Empty;
@@ -450,7 +610,7 @@ public partial class MainWindowViewModel : ObservableObject
             ErrorMessage = $"Cannot save due to validation errors: {ex.Message}";
             StatusMessage = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // Other errors; units remain in-memory
             ErrorMessage = $"Save failed: Unable to write file. Please check the file path and permissions.";

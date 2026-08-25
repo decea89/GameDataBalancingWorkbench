@@ -1,12 +1,275 @@
-﻿<Window x:Class="GameDataBalancingWorkbench.MainWindow"
+﻿<Window x:Class="BalanceForge.Desktop.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:GameDataBalancingWorkbench"
+        xmlns:local="clr-namespace:BalanceForge.Desktop"
+        xmlns:views="clr-namespace:BalanceForge.Desktop.Views"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="{Binding Title}" Height="800" Width="1400">
+    <Window.InputBindings>
+        <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoCommand}" />
+        <KeyBinding Key="Y" Modifiers="Ctrl" Command="{Binding RedoCommand}" />
+    </Window.InputBindings>
+    <DockPanel>
+        <!-- Top toolbar -->
+        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="10" Height="Auto">
+            <Button Command="{Binding SelectFileCommand}" Padding="10,5" Margin="0,0,10,0">
+                Select File
+            </Button>
+            <Button Command="{Binding LoadCommand}" Padding="10,5" Margin="0,0,10,0">
+                Load
+            </Button>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0" />
+            <Button Command="{Binding UndoCommand}" Padding="10,5" Margin="0,0,10,0" IsEnabled="{Binding CanUndo}">
+                Undo
+            </Button>
+            <Button Command="{Binding RedoCommand}" Padding="10,5" Margin="0,0,10,0" IsEnabled="{Binding CanRedo}">
+                Redo
+            </Button>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0" />
+            <Button Command="{Binding SaveCommand}" Padding="10,5" Margin="0,0,10,0">
+                Save
+            </Button>
+            <Button Command="{Binding SaveAsCommand}" Padding="10,5" Margin="0,0,10,0">
+                Save As
+            </Button>
+            <TextBlock Text="{Binding SelectedFilePath}" Margin="10,0" VerticalAlignment="Center" Foreground="Gray" FontSize="11" Width="300" TextTrimming="CharacterEllipsis"/>
+            <TextBlock Text="{Binding IsDirty, StringFormat='  Unsaved: {0}'}" Margin="20,0,0,0" VerticalAlignment="Center" Foreground="Red" FontWeight="Bold" />
+        </StackPanel>
 
-    </Grid>
+        <!-- Filter toolbar -->
+        <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="0,1,0,0" Margin="10,0">
+            <StackPanel Orientation="Horizontal" Margin="0,10">
+                <TextBlock Text="Filter by Role:" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="Bold"/>
+                <ItemsControl ItemsSource="{Binding AvailableRoles}" Margin="0,0,20,0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding}" Margin="5,0" VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="Filter by Tier:" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="Bold"/>
+                <ItemsControl ItemsSource="{Binding AvailableTiers}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding}" Margin="5,0" VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Button Command="{Binding ApplyFiltersCommand}" Padding="10,5" Margin="20,0,0,0">
+                    Apply Filters
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- Status area -->
+        <StackPanel DockPanel.Dock="Top" Margin="10" Orientation="Horizontal">
+            <TextBlock>
+                <Run Text="Units loaded: " Foreground="Black" />
+                <Run Text="{Binding LoadedUnitCount, Mode=OneWay}" Foreground="Green" FontWeight="Bold" />
+                <Run Text=" | Displayed: " Foreground="Black" />
+                <Run Text="{Binding DisplayedUnits.Count, Mode=OneWay}" Foreground="Blue" FontWeight="Bold" />
+                <Run Text=" | Issues: " Foreground="Black" />
+                <Run Text="{Binding ValidationIssueCount, Mode=OneWay}" Foreground="Orange" FontWeight="Bold" />
+            </TextBlock>
+            <TextBlock Margin="20,0,0,0" Foreground="#666" FontSize="10">
+                <Run Text="Tip: Select a unit, then Ctrl+click another to compare" />
+            </TextBlock>
+        </StackPanel>
+
+        <!-- Error and status messages -->
+        <StackPanel DockPanel.Dock="Top" Margin="10,0,10,10">
+            <TextBlock Foreground="Red" TextWrapping="Wrap">
+                <Run Text="{Binding ErrorMessage}" />
+            </TextBlock>
+            <TextBlock Foreground="Green" TextWrapping="Wrap" Margin="0,5,0,0" FontStyle="Italic">
+                <Run Text="{Binding StatusMessage}" />
+            </TextBlock>
+        </StackPanel>
+
+        <!-- Main content area: Chart + DataGrid + Inspector -->
+        <Grid DockPanel.Dock="Bottom">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="250" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Chart panel -->
+            <Border Grid.Row="0" BorderBrush="LightGray" BorderThickness="0,1,0,1" Background="White">
+                <views:BalanceChartView DataContext="{Binding BalanceChart}" />
+            </Border>
+
+            <!-- Data and panels -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="350" />
+                </Grid.ColumnDefinitions>
+
+            <!-- DataGrid -->
+            <Border Grid.Row="1" Grid.Column="0" BorderBrush="LightGray" BorderThickness="0,1,1,0">
+                <DataGrid ItemsSource="{Binding DisplayedUnits}" 
+                          SelectedItem="{Binding SelectedUnit}"
+                          IsReadOnly="True" 
+                          AutoGenerateColumns="False" 
+                          ColumnHeaderHeight="30">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Display Name" Binding="{Binding DisplayName}" Width="120"/>
+                        <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="100"/>
+                        <DataGridTextColumn Header="Tier" Binding="{Binding Tier}" Width="60"/>
+                        <DataGridTextColumn Header="Health" Binding="{Binding Health, StringFormat=F0}" Width="80"/>
+                        <DataGridTextColumn Header="Damage" Binding="{Binding Damage, StringFormat=F2}" Width="80"/>
+                        <DataGridTextColumn Header="Atk/Sec" Binding="{Binding AttacksPerSecond, StringFormat=F2}" Width="80"/>
+                        <DataGridTextColumn Header="Total Cost" Binding="{Binding TotalCost, StringFormat=F0}" Width="100"/>
+                        <DataGridTextColumn Header="DPS" Binding="{Binding DPS, StringFormat=F2}" Width="80"/>
+                        <DataGridTextColumn Header="DPS/Cost" Binding="{Binding DPSPerCost, StringFormat=F4}" Width="100"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!-- Inspector panel -->
+            <Border Grid.Row="1" Grid.Column="1" BorderBrush="LightGray" BorderThickness="1,1,0,0" Background="WhiteSmoke">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="15" Width="320" Orientation="Vertical">
+                        <TextBlock Text="Unit Inspector" FontSize="14" FontWeight="Bold" Margin="0,0,0,15" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Display Name:" Margin="0,0,10,5" />
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Inspector.DisplayName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Role:" Margin="0,0,10,5" />
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Inspector.UnitRole, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Tier:" Margin="0,0,10,5" />
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Inspector.Tier, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Health:" Margin="0,0,10,5" />
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Inspector.Health, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Damage:" Margin="0,0,10,5" />
+                            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Inspector.Damage, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5" />
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Atk/Sec:" Margin="0,0,10,5" />
+                            <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Inspector.AttacksPerSecond, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5" />
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Armor:" Margin="0,0,10,5" />
+                            <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding Inspector.Armor, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5" />
+
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Range:" Margin="0,0,10,5" />
+                            <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding Inspector.Range, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5" />
+
+                            <TextBlock Grid.Row="8" Grid.Column="0" Text="Wood Cost:" Margin="0,0,10,5" />
+                            <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding Inspector.WoodCost, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5" />
+
+                            <TextBlock Grid.Row="9" Grid.Column="0" Text="Gold Cost:" Margin="0,0,10,5" />
+                            <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding Inspector.GoldCost, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5" />
+
+                            <TextBlock Grid.Row="10" Grid.Column="0" Text="Pop Cost:" Margin="0,0,10,5" />
+                            <TextBox Grid.Row="10" Grid.Column="1" Text="{Binding Inspector.PopulationCost, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5" />
+
+                            <TextBlock Grid.Row="11" Grid.Column="0" Text="Prod Time:" Margin="0,0,10,5" />
+                            <TextBox Grid.Row="11" Grid.Column="1" Text="{Binding Inspector.ProductionTimeSeconds, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,5" />
+                        </Grid>
+
+                        <TextBlock Text="{Binding Inspector.HasUnsavedChanges, StringFormat='Unsaved changes: {0}'}" Margin="0,15,0,10" Foreground="Red" FontWeight="Bold" />
+
+                        <Button Command="{Binding UpdateUnitCommand}" Padding="10,5" Margin="0,0,0,10">
+                            Apply Changes
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Issues panel -->
+            <Border Grid.Row="1" Grid.Column="2" BorderBrush="LightGray" BorderThickness="1,1,0,0" Background="#FFF8F0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="15" Width="320" Orientation="Vertical">
+                        <TextBlock Text="Validation Issues" FontSize="14" FontWeight="Bold" Margin="0,0,0,15" />
+
+                        <TextBlock Text="{Binding IssuesPanel.DisplayedIssues.Count, Mode=OneWay, StringFormat='Total: {0}'}" Margin="0,0,0,10" FontWeight="Bold" />
+
+                        <!-- Issues list -->
+                        <ItemsControl ItemsSource="{Binding IssuesPanel.DisplayedIssues}" MaxHeight="400" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Command="{Binding DataContext.SelectIssueCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                            CommandParameter="{Binding .}"
+                                            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                            HorizontalAlignment="Stretch"
+                                            Margin="0,0,0,5"
+                                            Padding="5">
+                                        <StackPanel Orientation="Vertical" HorizontalAlignment="Left">
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                                <TextBlock Text="{Binding Severity}" FontWeight="Bold" Margin="0,0,10,0">
+                                                    <TextBlock.Foreground>
+                                                        <MultiBinding Converter="{StaticResource SeverityToColorConverter}">
+                                                            <Binding Path="Severity" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Foreground>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding UnitId}" Foreground="Gray" FontSize="11" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,3" />
+                                            <TextBlock Text="{Binding SuggestedAction}" TextWrapping="Wrap" FontSize="10" Foreground="DarkGreen" FontStyle="Italic" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Button Command="{Binding IssuesPanel.ClearFiltersCommand}" Padding="10,5" Margin="0,15,0,0">
+                            Clear Filters
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Comparison panel -->
+            <Border Grid.Row="1" Grid.Column="3" BorderBrush="LightGray" BorderThickness="1,1,0,0" Background="White">
+                <views:ComparisonView DataContext="{Binding Comparison}" />
+            </Border>
+            </Grid>
+        </Grid>
+
+        <!-- Status bar -->
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock Text="{Binding IsLoading, StringFormat='Loading: {0}'}" />
+            </StatusBarItem>
+        </StatusBar>
+    </DockPanel>
 </Window>

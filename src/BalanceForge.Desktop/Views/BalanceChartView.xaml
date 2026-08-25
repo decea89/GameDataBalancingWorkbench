@@ -25,14 +25,15 @@
             FontSize="11"
             Foreground="#999"
             Text="No units selected. Filter or select units to view their metrics."
-            Visibility="Collapsed"
+            Visibility="{Binding HasData, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
             x:Name="EmptyStateMessage" />
 
         <!-- Data Info -->
         <ItemsControl
             Grid.Row="1"
             x:Name="ChartInfo"
-            ItemsSource="{Binding DisplayedUnits}">
+            ItemsSource="{Binding ChartData}"
+            Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityConverter}}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Border Margin="0,4,0,4" BorderBrush="#DDD" BorderThickness="0,1,0,0" Padding="4">
@@ -43,7 +44,7 @@
                                 <ColumnDefinition Width="80" />
                                 <ColumnDefinition Width="80" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" FontSize="10" FontWeight="Bold" Text="{Binding DisplayName}" />
+                            <TextBlock Grid.Column="0" FontSize="10" FontWeight="Bold" Text="{Binding UnitName}" />
                             <TextBlock Grid.Column="1" FontSize="10" Foreground="#2E75B6" Text="{Binding TotalCost, StringFormat='Cost: {0}'}" />
                             <TextBlock Grid.Column="2" FontSize="10" Foreground="#C5504C" Text="{Binding DPS, StringFormat='DPS: {0:F1}'}" />
                             <TextBlock Grid.Column="3" FontSize="10" Foreground="#70AD47" Text="{Binding EffectiveHealth, StringFormat='EH: {0:F1}'}" />

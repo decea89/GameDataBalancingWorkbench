@@ -4,8 +4,6 @@ using System.Collections.ObjectModel;
 using BalanceForge.Application;
 using BalanceForge.Domain;
 using CommunityToolkit.Mvvm.ComponentModel;
-using LiveCharts;
-using LiveCharts.SkiaSharp;
 
 /// <summary>
 /// View model for the balance analysis chart.
@@ -17,10 +15,7 @@ public partial class BalanceChartViewModel : ObservableObject
     private readonly BalanceMetricsCalculator _metricsCalculator;
 
     [ObservableProperty]
-    private ObservableCollection<ISeries> seriesCollection = new();
-
-    [ObservableProperty]
-    private List<string> labels = new();
+    private ObservableCollection<ChartDataPoint> chartData = new();
 
     [ObservableProperty]
     private string chartTitle = "Unit Balance Comparison";
@@ -52,56 +47,43 @@ public partial class BalanceChartViewModel : ObservableObject
             return;
         }
 
-        // Prepare labels (unit display names)
-        Labels = unitList.Select(u => u.DisplayName).ToList();
-
-        // Calculate metrics for each unit
-        var totalCosts = new List<double>();
-        var dpsList = new List<double>();
-        var effectiveHealths = new List<double>();
+        // Populate chart data
+        ChartData.Clear();
 
         foreach (var unit in unitList)
         {
-            var metrics = _metricsCalculator.Calculate(unit.UnitDefinition);
-            totalCosts.Add(metrics.TotalCost);
-            dpsList.Add(metrics.DamagePerSecond);
-            effectiveHealths.Add(metrics.EffectiveHealth);
+            if (unit.UnitDefinition == null)
+                continue;
+
+            var point = new ChartDataPoint
+            {
+                UnitName = unit.DisplayName,
+                TotalCost = (decimal)unit.TotalCost,
+                DPS = (decimal)unit.DPS,
+                EffectiveHealth = (decimal)unit.EffectiveHealth
+            };
+
+            ChartData.Add(point);
         }
 
-        // Create series for the chart
-        var series = new ObservableCollection<ISeries>
-        {
-            new ColumnSeries<double>
-            {
-                Title = "Total Cost",
-                Values = totalCosts.AsLiveChartsBindingList(),
-                Fill = new SolidColorPaint(SKColors.RoyalBlue),
-            },
-            new ColumnSeries<double>
-            {
-                Title = "DPS",
-                Values = dpsList.AsLiveChartsBindingList(),
-                Fill = new SolidColorPaint(SKColors.OrangeRed),
-            },
-            new ColumnSeries<double>
-            {
-                Title = "Effective Health",
-                Values = effectiveHealths.AsLiveChartsBindingList(),
-                Fill = new SolidColorPaint(SKColors.ForestGreen),
-            },
-        };
-
-        SeriesCollection = series;
-        HasData = true;
+        HasData = ChartData.Count > 0;
     }
 
-    /// <summary>
-    /// Clears chart data and shows empty state.
-    /// </summary>
     private void ClearChart()
     {
-        SeriesCollection = new ObservableCollection<ISeries>();
-        Labels = new List<string>();
+        ChartData.Clear();
         HasData = false;
     }
+}
+
+/// <summary>
+/// Simple data point for chart display.
+/// Used by BalanceChartView to show metrics for each unit.
+/// </summary>
+public class ChartDataPoint
+{
+    public string UnitName { get; set; } = string.Empty;
+    public decimal TotalCost { get; set; }
+    public decimal DPS { get; set; }
+    public decimal EffectiveHealth { get; set; }
 }

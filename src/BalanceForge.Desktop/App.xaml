@@ -5,5 +5,7 @@
              xmlns:converters="clr-namespace:BalanceForge.Desktop.Converters">
     <Application.Resources>
         <converters:SeverityToColorConverter x:Key="SeverityToColorConverter" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
     </Application.Resources>
 </Application>

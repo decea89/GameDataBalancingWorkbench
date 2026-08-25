@@ -15,6 +15,7 @@ public class UnitMapperTests
         {
             Id = "knight",
             DisplayName = "Knight",
+            ImagePath = "images/knight.png",
             Role = "Cavalry",
             Tier = 2,
             Health = 180d,
@@ -35,6 +36,7 @@ public class UnitMapperTests
         // Assert
         Assert.Equal("knight", unit.Id);
         Assert.Equal("Knight", unit.DisplayName);
+        Assert.Equal("images/knight.png", unit.ImagePath);
         Assert.Equal(UnitRole.Cavalry, unit.Role);
         Assert.Equal(2, unit.Tier);
         Assert.Equal(180, unit.Health);
@@ -90,6 +92,7 @@ public class UnitMapperTests
         {
             Id = "archer",
             DisplayName = "Archer",
+            ImagePath = "images/archer.png",
             Role = UnitRole.Ranged,
             Tier = 1,
             Health = 30d,
@@ -110,6 +113,7 @@ public class UnitMapperTests
         // Assert
         Assert.Equal("archer", json.Id);
         Assert.Equal("Archer", json.DisplayName);
+        Assert.Equal("images/archer.png", json.ImagePath);
         Assert.Equal("Ranged", json.Role);
         Assert.Equal(1, json.Tier);
         Assert.Equal(30d, json.Health);
@@ -139,6 +143,7 @@ public class UnitMapperTests
         {
             Id = "test",
             DisplayName = "Test",
+            ImagePath = "images/test.png",
             Role = UnitRole.Support,
             Tier = 3,
             Health = 120d,
@@ -160,6 +165,7 @@ public class UnitMapperTests
         // Assert
         Assert.Equal(original.Id, roundTripped.Id);
         Assert.Equal(original.DisplayName, roundTripped.DisplayName);
+        Assert.Equal(original.ImagePath, roundTripped.ImagePath);
         Assert.Equal(original.Role, roundTripped.Role);
         Assert.Equal(original.Tier, roundTripped.Tier);
         Assert.Equal(original.Health, roundTripped.Health);

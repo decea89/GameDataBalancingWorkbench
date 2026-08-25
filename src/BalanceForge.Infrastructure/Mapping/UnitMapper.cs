@@ -25,6 +25,7 @@ public static class UnitMapper
         {
             Id = json.Id,
             DisplayName = json.DisplayName,
+            ImagePath = json.ImagePath,
             Role = role,
             Tier = json.Tier,
             Health = json.Health,
@@ -51,6 +52,7 @@ public static class UnitMapper
         {
             Id = unit.Id,
             DisplayName = unit.DisplayName,
+            ImagePath = unit.ImagePath,
             Role = unit.Role.ToString(),
             Tier = unit.Tier,
             Health = unit.Health,

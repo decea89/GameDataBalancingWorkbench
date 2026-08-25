@@ -19,6 +19,11 @@ public class UnitDefinition
     public required string DisplayName { get; set; }
 
     /// <summary>
+    /// Optional path to the unit illustration. Relative paths are resolved from the roster JSON file.
+    /// </summary>
+    public string? ImagePath { get; set; }
+
+    /// <summary>
     /// The unit's archetype role.
     /// </summary>
     public required UnitRole Role { get; set; }

@@ -58,6 +58,9 @@ public partial class BalanceChartViewModel : ObservableObject
             var point = new ChartDataPoint
             {
                 UnitName = unit.DisplayName,
+                UnitInitial = unit.UnitInitial,
+                ImageSourcePath = unit.ImageSourcePath,
+                HasImage = unit.HasImage,
                 TotalCost = (decimal)unit.TotalCost,
                 DPS = (decimal)unit.DPS,
                 EffectiveHealth = (decimal)unit.EffectiveHealth
@@ -83,6 +86,9 @@ public partial class BalanceChartViewModel : ObservableObject
 public class ChartDataPoint
 {
     public string UnitName { get; set; } = string.Empty;
+    public string UnitInitial { get; set; } = "?";
+    public string? ImageSourcePath { get; set; }
+    public bool HasImage { get; set; }
     public decimal TotalCost { get; set; }
     public decimal DPS { get; set; }
     public decimal EffectiveHealth { get; set; }

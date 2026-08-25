@@ -10,7 +10,7 @@ The project is intentionally designed as a maintainable internal-tool style appl
 
 1. Launch the application.
 2. Click **Select File** and navigate to `samples/units.json`.
-3. Click **Load** to populate the roster.
+3. Click **Load** to populate the roster and its illustrated unit overview.
 4. Select a unit in the grid to view its stats in the inspector.
 5. **Ctrl+click** another unit to compare side-by-side.
 6. Edit any stat in the inspector; see metrics and validation feedback update in real-time.
@@ -50,7 +50,7 @@ The first release focuses on unit balance data and is feature-complete.
 5. Compare two units side-by-side: select one unit, then Ctrl+click another.
 6. Review validation issues that identify the affected unit, explain the rule and suggest an action.
 7. Undo/Redo any change with Ctrl+Z / Ctrl+Y.
-8. View a balance chart showing Total Cost, DPS and Effective Health across all displayed units.
+8. View illustrated unit cards showing Total Cost, DPS and Effective Health across all displayed units.
 9. Save validated data explicitly when ready.
 
 ### Unit data
@@ -59,6 +59,7 @@ A unit definition includes:
 
 - `Id`
 - `DisplayName`
+- `ImagePath` (optional, relative to the roster JSON file or absolute)
 - `Role`
 - `Tier`
 - `Health`
@@ -108,7 +109,8 @@ BalanceForge.sln
 │   └── BalanceForge.Application.Tests/
 │
 ├── samples/
-│   └── units.json
+│   ├── units.json
+│   └── images/                       # Optional unit illustrations referenced by imagePath
 │
 └── docs/
 ```
@@ -140,6 +142,7 @@ BalanceForge.sln
     {
       "id": "knight",
       "displayName": "Knight",
+      "imagePath": "images/knight.png",
       "role": "Cavalry",
       "tier": 2,
       "health": 180,
@@ -155,6 +158,10 @@ BalanceForge.sln
   ]
 }
 ```
+
+`imagePath` is optional. Relative paths are resolved from the folder containing the loaded
+roster file, which keeps data packs portable. If the file is missing or the property is
+omitted, the unit card displays a placeholder with the unit's initial.
 
 ## Development principles
 
@@ -177,10 +184,11 @@ BalanceForge.sln
 - [x] Validation issue panel with explainable, actionable feedback
 - [x] Dirty-state and explicit save workflow
 - [x] Undo/Redo for all content edits (Ctrl+Z / Ctrl+Y)
-- [x] Balance chart for visual comparison (Total Cost, DPS, Effective Health)
+- [x] Illustrated unit overview for visual comparison (Total Cost, DPS, Effective Health)
 - [x] Two-unit comparison panel with Ctrl+click selection
 - [x] Unit and application-layer tests
 - [x] Sample data (`samples/units.json`)
+- [x] Optional unit artwork loaded through portable JSON paths
 
 ### Post-MVP
 

@@ -1,5 +1,6 @@
 namespace BalanceForge.Desktop.ViewModels;
 
+using System.IO;
 using BalanceForge.Application;
 using BalanceForge.Domain;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -12,16 +13,41 @@ public class RosterUnitViewModel : ObservableObject
 {
     private readonly UnitDefinition _unit;
     private readonly BalanceMetricsCalculator _calculator;
+    private readonly string? _rosterDirectory;
 
-    public RosterUnitViewModel(UnitDefinition unit, BalanceMetricsCalculator calculator)
+    public RosterUnitViewModel(
+        UnitDefinition unit,
+        BalanceMetricsCalculator calculator,
+        string? rosterDirectory = null)
     {
         _unit = unit ?? throw new ArgumentNullException(nameof(unit));
         _calculator = calculator ?? throw new ArgumentNullException(nameof(calculator));
+        _rosterDirectory = rosterDirectory;
     }
 
     // Unit properties
     public string Id => _unit.Id;
     public string DisplayName => _unit.DisplayName;
+    public string UnitInitial => string.IsNullOrWhiteSpace(DisplayName)
+        ? "?"
+        : DisplayName[..1].ToUpperInvariant();
+    public string? ImageSourcePath
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_unit.ImagePath))
+            {
+                return null;
+            }
+
+            var resolvedPath = Path.IsPathRooted(_unit.ImagePath)
+                ? _unit.ImagePath
+                : Path.Combine(_rosterDirectory ?? string.Empty, _unit.ImagePath);
+
+            return File.Exists(resolvedPath) ? Path.GetFullPath(resolvedPath) : null;
+        }
+    }
+    public bool HasImage => ImageSourcePath != null;
     public UnitRole Role => _unit.Role;
     public int Tier => _unit.Tier;
     public double Health => _unit.Health;
@@ -73,6 +99,9 @@ public class RosterUnitViewModel : ObservableObject
     public void Refresh()
     {
         OnPropertyChanged(nameof(DisplayName));
+        OnPropertyChanged(nameof(UnitInitial));
+        OnPropertyChanged(nameof(ImageSourcePath));
+        OnPropertyChanged(nameof(HasImage));
         OnPropertyChanged(nameof(Role));
         OnPropertyChanged(nameof(Tier));
         OnPropertyChanged(nameof(Health));

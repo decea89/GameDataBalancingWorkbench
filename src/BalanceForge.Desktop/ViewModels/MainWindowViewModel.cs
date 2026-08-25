@@ -1,6 +1,7 @@
 namespace BalanceForge.Desktop.ViewModels;
 
 using System.Collections.ObjectModel;
+using System.IO;
 using BalanceForge.Application;
 using BalanceForge.Application.Services;
 using BalanceForge.Application.UndoRedo;
@@ -238,9 +239,12 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     public void ApplyFilters()
     {
+        var rosterDirectory = string.IsNullOrWhiteSpace(SelectedFilePath)
+            ? null
+            : Path.GetDirectoryName(SelectedFilePath);
         var filtered = Units
             .Where(u => SelectedRoles.Contains(u.Role) && SelectedTiers.Contains(u.Tier))
-            .Select(u => new RosterUnitViewModel(u, _metricsCalculator))
+            .Select(u => new RosterUnitViewModel(u, _metricsCalculator, rosterDirectory))
             .ToList();
 
         DisplayedUnits = new ObservableCollection<RosterUnitViewModel>(filtered);

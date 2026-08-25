@@ -19,7 +19,7 @@ The project is intentionally designed as a maintainable internal-tool style appl
 
 ## Demo
 
-For a complete walkthrough of the MVP workflow, see [DEMO_RECORDING_GUIDE.md](docs/DEMO_RECORDING_GUIDE.md).
+For a complete walkthrough of the MVP workflow, see [DEMO_RECORDING.md] (WIP)
 
 To view a live demonstration:
 1. Download and run the application
@@ -192,15 +192,6 @@ BalanceForge.sln
 - [ ] JSON, Markdown and SARIF reports
 - [ ] Import helpers for design spreadsheets
 - [ ] Animation/visual feedback for edits and validation changes
-
-## Non-goals
-
-BalanceForge is not intended to:
-
-- Be a complete game engine or Unity/Unreal editor replacement.
-- Decide what constitutes good balance automatically.
-- Modify game data silently.
-- Introduce database, AI, plugin or network infrastructure before it solves a demonstrated product need.
 
 ## License
 

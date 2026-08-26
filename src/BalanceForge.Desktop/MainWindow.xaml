@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:BalanceForge.Desktop"
         xmlns:views="clr-namespace:BalanceForge.Desktop.Views"
         mc:Ignorable="d"
-        Title="{Binding Title}" Height="800" Width="1400">
+        Title="{Binding Title}" Height="900" Width="1400" MinHeight="720">
     <Window.InputBindings>
         <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoCommand}" />
         <KeyBinding Key="Y" Modifiers="Ctrl" Command="{Binding RedoCommand}" />
@@ -34,7 +34,17 @@
             <Button Command="{Binding SaveAsCommand}" Padding="10,5" Margin="0,0,10,0">
                 Save As
             </Button>
-            <TextBlock Text="{Binding SelectedFilePath}" Margin="10,0" VerticalAlignment="Center" Foreground="Gray" FontSize="11" Width="300" TextTrimming="CharacterEllipsis"/>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0" />
+            <Button Command="{Binding CompareSnapshotCommand}" Padding="10,5" Margin="0,0,10,0">
+                Compare Snapshot
+            </Button>
+            <Button Command="{Binding ClearSnapshotComparisonCommand}"
+                    Padding="10,5"
+                    Margin="0,0,10,0"
+                    IsEnabled="{Binding HasSnapshotComparison}">
+                Clear Diff
+            </Button>
+            <TextBlock Text="{Binding SelectedFilePath}" Margin="10,0" VerticalAlignment="Center" Foreground="Gray" FontSize="11" Width="220" TextTrimming="CharacterEllipsis"/>
             <TextBlock Text="{Binding IsDirty, StringFormat='  Unsaved: {0}'}" Margin="20,0,0,0" VerticalAlignment="Center" Foreground="Red" FontWeight="Bold" />
         </StackPanel>
 
@@ -111,6 +121,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="250" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- Chart panel -->
@@ -274,6 +285,14 @@
                 <views:ComparisonView DataContext="{Binding Comparison}" />
             </Border>
             </Grid>
+
+            <Border Grid.Row="2"
+                    Height="210"
+                    BorderBrush="#B9C3CF"
+                    BorderThickness="0,1,0,0"
+                    Visibility="{Binding HasSnapshotComparison, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <views:SnapshotComparisonView DataContext="{Binding SnapshotComparison}" />
+            </Border>
         </Grid>
 
         <!-- Status bar -->

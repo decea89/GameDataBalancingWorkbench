@@ -16,6 +16,11 @@ The project is intentionally designed as a maintainable internal-tool style appl
 6. Edit any stat in the inspector; see metrics and validation feedback update in real-time.
 7. Click **Undo** (or Ctrl+Z) to revert changes, or **Redo** (Ctrl+Y) to reapply them.
 8. Click **Save** when ready; unsaved changes are protected by a confirmation dialog.
+9. Click **Compare Snapshot** and choose another roster JSON to review added, removed and field-level balance changes.
+
+For a ready-made diff demo, load `samples/units.json` as the current roster and select
+`samples/units-baseline.json` from **Compare Snapshot**. The two files include modified,
+added and removed units so every diff state is visible immediately.
 
 ## Demo
 
@@ -52,7 +57,8 @@ The first release focuses on unit balance data and is feature-complete.
 7. Undo/Redo any change with Ctrl+Z / Ctrl+Y.
 8. View illustrated unit cards showing Total Cost, DPS and Effective Health across all displayed units.
 9. Review explainable outlier diagnostics against each unit's tier median.
-9. Save validated data explicitly when ready.
+10. Compare the current in-memory roster against another JSON snapshot with readable field deltas.
+11. Save validated data explicitly when ready.
 
 ### Unit data
 
@@ -112,6 +118,7 @@ BalanceForge.sln
 │
 ├── samples/
 │   ├── units.json
+│   ├── units-baseline.json           # Earlier balance pass for snapshot diff demos
 │   └── images/                       # Optional unit illustrations referenced by imagePath
 │
 └── docs/
@@ -189,13 +196,13 @@ omitted, the unit card displays a placeholder with the unit's initial.
 - [x] Illustrated unit overview for visual comparison (Total Cost, DPS, Effective Health)
 - [x] Two-unit comparison panel with Ctrl+click selection
 - [x] Unit and application-layer tests
-- [x] Sample data (`samples/units.json`)
+- [x] Expanded eight-unit sample roster (`samples/units.json`)
 - [x] Optional unit artwork loaded through portable JSON paths
 - [x] Explainable outlier diagnostics with tier benchmarks
 
 ### Post-MVP
 
-- [ ] Compare two data files and present a readable diff
+- [x] Compare two data files and present a readable, live-updating field diff
 - [ ] Unit, ability, effect and tag relationships
 - [ ] Tier and role-relative balance indicators
 - [ ] Deterministic matchup simulation

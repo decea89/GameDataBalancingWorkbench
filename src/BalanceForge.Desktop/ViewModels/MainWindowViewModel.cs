@@ -114,6 +114,12 @@ public partial class MainWindowViewModel : ObservableObject
     private ComparisonViewModel? comparison;
 
     [ObservableProperty]
+    private SnapshotComparisonViewModel snapshotComparison = new();
+
+    [ObservableProperty]
+    private bool hasSnapshotComparison;
+
+    [ObservableProperty]
     private string statusMessage = string.Empty;
 
     [ObservableProperty]
@@ -220,6 +226,7 @@ public partial class MainWindowViewModel : ObservableObject
             _historyPosition = 0;
             _savedHistoryPosition = 0;
             Inspector.ClearUnsavedChanges();
+            ClearSnapshotComparison();
         }
         catch (Exception ex)
         {
@@ -249,6 +256,58 @@ public partial class MainWindowViewModel : ObservableObject
 
         DisplayedUnits = new ObservableCollection<RosterUnitViewModel>(filtered);
         DisplayedUnitCount = filtered.Count;
+    }
+
+    [RelayCommand]
+    public async Task CompareSnapshot()
+    {
+        if (Units.Count == 0)
+        {
+            ErrorMessage = "Load a current roster before selecting a baseline.";
+            return;
+        }
+
+        try
+        {
+            var initialDirectory = string.IsNullOrWhiteSpace(SelectedFilePath)
+                ? null
+                : Path.GetDirectoryName(SelectedFilePath);
+            var baselinePath = await _fileDialogService.OpenFileAsync(initialDirectory);
+            if (string.IsNullOrWhiteSpace(baselinePath))
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedFilePath) &&
+                string.Equals(
+                    Path.GetFullPath(baselinePath),
+                    Path.GetFullPath(SelectedFilePath),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                ErrorMessage = "Choose a different roster file as the comparison baseline.";
+                return;
+            }
+
+            var baselineResult = await _loadRosterUseCase.ExecuteAsync(baselinePath);
+            SnapshotComparison.SetComparison(
+                Path.GetFileName(baselinePath),
+                baselineResult.Units,
+                Units);
+            HasSnapshotComparison = true;
+            ErrorMessage = string.Empty;
+            StatusMessage = $"Compared current roster with {Path.GetFileName(baselinePath)}.";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to compare roster snapshot: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    public void ClearSnapshotComparison()
+    {
+        SnapshotComparison.Clear();
+        HasSnapshotComparison = false;
     }
 
     [RelayCommand]
@@ -468,6 +527,10 @@ public partial class MainWindowViewModel : ObservableObject
     {
         DisplayedUnits.FirstOrDefault(unit => unit.Id == unitId)?.Refresh();
         BalanceChart?.UpdateChartData(DisplayedUnits, Units);
+        if (HasSnapshotComparison)
+        {
+            SnapshotComparison.Refresh(Units);
+        }
         RefreshValidationAndMetrics();
     }
 

@@ -51,6 +51,7 @@ The first release focuses on unit balance data and is feature-complete.
 6. Review validation issues that identify the affected unit, explain the rule and suggest an action.
 7. Undo/Redo any change with Ctrl+Z / Ctrl+Y.
 8. View illustrated unit cards showing Total Cost, DPS and Effective Health across all displayed units.
+9. Review explainable outlier diagnostics against each unit's tier median.
 9. Save validated data explicitly when ready.
 
 ### Unit data
@@ -81,6 +82,7 @@ The initial metrics are diagnostic signals, not claims of objectively correct ga
 - DPS per cost
 - Simplified effective health
 - Tier and role-relative balance indicators
+- Explainable tier-median outlier diagnostics for Cost, DPS and Effective Health
 
 ### Validation rules
 
@@ -189,6 +191,7 @@ omitted, the unit card displays a placeholder with the unit's initial.
 - [x] Unit and application-layer tests
 - [x] Sample data (`samples/units.json`)
 - [x] Optional unit artwork loaded through portable JSON paths
+- [x] Explainable outlier diagnostics with tier benchmarks
 
 ### Post-MVP
 

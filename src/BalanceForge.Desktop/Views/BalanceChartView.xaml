@@ -10,12 +10,16 @@
         </Grid.RowDefinitions>
 
         <!-- Title -->
-        <TextBlock
-            Grid.Row="0"
-            FontSize="14"
-            FontWeight="Bold"
-            Foreground="#252A31"
-            Text="Unit Overview" />
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <TextBlock FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="#252A31"
+                       Text="Unit Overview" />
+            <TextBlock Margin="14,1,0,0"
+                       FontSize="11"
+                       Foreground="#6B7280"
+                       Text="{Binding OutlierCount, StringFormat='Diagnostics: {0} flagged'}" />
+        </StackPanel>
 
         <!-- Empty State -->
         <TextBlock
@@ -87,6 +91,25 @@
                                                FontSize="11"
                                                Foreground="#365F87"
                                                Text="{Binding TotalCost, StringFormat='Cost  {0:F0}'}" />
+                                    <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
+                                        <Border Padding="5,1"
+                                                Background="#F3F4F6"
+                                                BorderBrush="{Binding DiagnosticColor}"
+                                                BorderThickness="1"
+                                                CornerRadius="3">
+                                            <TextBlock FontSize="9"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{Binding DiagnosticColor}"
+                                                       Text="{Binding DiagnosticStatus}" />
+                                        </Border>
+                                        <TextBlock Margin="7,2,0,0"
+                                                   Width="122"
+                                                   FontSize="9"
+                                                   Foreground="#5B626C"
+                                                   Text="{Binding DiagnosticInsight}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding DiagnosticInsight}" />
+                                    </StackPanel>
                                     <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
                                         <TextBlock FontSize="11"
                                                    Foreground="#9A3D3A"

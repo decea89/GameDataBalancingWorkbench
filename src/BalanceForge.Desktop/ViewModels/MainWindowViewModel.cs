@@ -101,7 +101,7 @@ public partial class MainWindowViewModel : ObservableObject
     partial void OnDisplayedUnitsChanged(ObservableCollection<RosterUnitViewModel> value)
     {
         // Update chart when displayed units change (due to filters or load)
-        BalanceChart?.UpdateChartData(value);
+        BalanceChart?.UpdateChartData(value, Units);
     }
 
     [ObservableProperty]
@@ -467,7 +467,7 @@ public partial class MainWindowViewModel : ObservableObject
     private void RefreshUnitPresentation(string unitId)
     {
         DisplayedUnits.FirstOrDefault(unit => unit.Id == unitId)?.Refresh();
-        BalanceChart?.UpdateChartData(DisplayedUnits);
+        BalanceChart?.UpdateChartData(DisplayedUnits, Units);
         RefreshValidationAndMetrics();
     }
 

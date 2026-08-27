@@ -4,7 +4,10 @@
 
 BalanceForge is a portfolio project for a fictional tactical RPG / RTS. It models a real production workflow: designers define gameplay entities, inspect derived balance metrics, receive explainable validation feedback, compare data changes and export validated content for use by a game.
 
-The project is intentionally designed as a maintainable internal-tool style application rather than a generic CRUD demo. Its primary user is a game designer, not a programmer.
+The project is intentionally designed as a maintainable internal-tool style application. Its primary user is a game designer, not a programmer.
+
+<img width="2559" height="1005" alt="image" src="https://github.com/user-attachments/assets/aff27a87-492c-4fb1-9468-0ae0697007eb" />
+
 
 ## Quick Start
 
@@ -203,8 +206,8 @@ omitted, the unit card displays a placeholder with the unit's initial.
 ### Post-MVP
 
 - [x] Compare two data files and present a readable, live-updating field diff
-- [ ] Unit, ability, effect and tag relationships
-- [ ] Tier and role-relative balance indicators
+- [x] Unit, ability, effect and tag relationships
+- [x] Tier and role-relative balance indicators
 - [ ] Deterministic matchup simulation
 - [ ] Headless CLI validation for CI
 - [ ] JSON, Markdown and SARIF reports

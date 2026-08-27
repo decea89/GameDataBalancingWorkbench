@@ -7,5 +7,6 @@
         <converters:SeverityToColorConverter x:Key="SeverityToColorConverter" />
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+        <converters:ImagePathToImageSourceConverter x:Key="ImagePathToImageSourceConverter" />
     </Application.Resources>
 </Application>

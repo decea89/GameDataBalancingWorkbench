@@ -67,6 +67,7 @@
     {
       "id": "swordsman",
       "displayName": "Swordsman",
+      "imagePath": "images/swordsman.png",
       "role": "Infantry",
       "tier": 2,
       "health": 155,
@@ -82,6 +83,7 @@
     {
       "id": "crossbowman",
       "displayName": "Crossbowman",
+      "imagePath": "images/crossbowman.png",
       "role": "Ranged",
       "tier": 2,
       "health": 115,
@@ -97,6 +99,7 @@
     {
       "id": "paladin",
       "displayName": "Paladin",
+      "imagePath": "images/paladin.png",
       "role": "Cavalry",
       "tier": 3,
       "health": 240,

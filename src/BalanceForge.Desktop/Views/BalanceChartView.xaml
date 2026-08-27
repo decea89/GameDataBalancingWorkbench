@@ -45,23 +45,42 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Width="310"
-                                Height="96"
+                        <Border Width="330"
+                                MinHeight="116"
                                 Margin="0,0,10,10"
                                 Padding="10"
                                 Background="White"
                                 BorderBrush="#D6D9DE"
                                 BorderThickness="1"
                                 CornerRadius="4">
+                            <Border.ToolTip>
+                                <ToolTip>
+                                    <StackPanel MinWidth="230">
+                                        <TextBlock FontWeight="Bold"
+                                                   Text="{Binding UnitName}" />
+                                        <TextBlock Margin="0,5,0,0"
+                                                   Text="{Binding TotalCost, StringFormat='Total Cost: {0:F0}'}" />
+                                        <TextBlock Text="{Binding DPS, StringFormat='DPS: {0:F1}'}" />
+                                        <TextBlock Text="{Binding EffectiveHealth, StringFormat='Effective Health: {0:F1}'}" />
+                                        <Separator Margin="0,5" />
+                                        <TextBlock FontWeight="SemiBold"
+                                                   Foreground="{Binding DiagnosticColor}"
+                                                   Text="{Binding DiagnosticStatus}" />
+                                        <TextBlock MaxWidth="320"
+                                                   TextWrapping="Wrap"
+                                                   Text="{Binding DiagnosticInsight}" />
+                                    </StackPanel>
+                                </ToolTip>
+                            </Border.ToolTip>
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="72" />
+                                    <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
 
                                 <Border Grid.Column="0"
-                                        Width="72"
-                                        Height="72"
+                                        Width="90"
+                                        Height="90"
                                         Background="#E7EAEE"
                                         BorderBrush="#C5CAD1"
                                         BorderThickness="1"
@@ -75,13 +94,13 @@
                                                    Foreground="#69717D"
                                                    Text="{Binding UnitInitial}"
                                                    Visibility="{Binding HasImage, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
-                                        <Image Source="{Binding ImageSourcePath}"
+                                        <Image Source="{Binding ImageSourcePath, Converter={StaticResource ImagePathToImageSourceConverter}}"
                                                Stretch="UniformToFill"
                                                Visibility="{Binding HasImage, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                     </Grid>
                                 </Border>
 
-                                <StackPanel Grid.Column="1" Margin="12,1,0,0">
+                                <StackPanel Grid.Column="1" Margin="12,2,0,0">
                                     <TextBlock FontSize="13"
                                                FontWeight="SemiBold"
                                                Foreground="#252A31"
@@ -103,7 +122,7 @@
                                                        Text="{Binding DiagnosticStatus}" />
                                         </Border>
                                         <TextBlock Margin="7,2,0,0"
-                                                   Width="122"
+                                                   Width="132"
                                                    FontSize="9"
                                                    Foreground="#5B626C"
                                                    Text="{Binding DiagnosticInsight}"
